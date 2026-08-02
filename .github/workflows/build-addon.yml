@@ -1,6 +1,7 @@
 name: Build & Publish Add-on
 
 on:
+  workflow_call:
   release:
     types: [published]
   push:
@@ -22,17 +23,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # release/push-tag triggers (e.g. a manually-created tag/release) may
+      # predate a config.yaml version bump, so sync config.yaml to the tag
+      # first. When invoked via workflow_call (our own release.yml, right
+      # after semantic-release already committed the bump to main), skip
+      # this — config.yaml on the checked-out commit is already correct.
       - name: Extract version from tag
-        id: version
+        id: tag_version
+        if: github.event_name != 'workflow_call'
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Update config.yaml version
+      - name: Sync config.yaml to tag version
+        if: github.event_name != 'workflow_call'
         run: |
-          sed -i "s/^version:.*/version: \"${{ steps.version.outputs.version }}\"/" config.yaml
+          sed -i "s/^version:.*/version: \"${{ steps.tag_version.outputs.version }}\"/" config.yaml
+
+      - name: Read version to build
+        id: version
+        run: |
+          VERSION=$(grep '^version:' config.yaml | sed -E 's/version:[[:space:]]*"?([^"]*)"?/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -59,7 +72,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Commit updated config.yaml
+      - name: Commit synced config.yaml (release/push-tag triggers only)
+        if: github.event_name != 'workflow_call'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
