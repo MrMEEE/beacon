@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/asachs01/beacon/compare/v1.32.0...v1.32.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **dashboard:** render Family layout as vertical columns, not stacked rows ([bac3427](https://github.com/asachs01/beacon/commit/bac34279e5ba91b0b1e4194631f9eaed3e4ecdb5))
+
 # [1.32.0](https://github.com/asachs01/beacon/compare/v1.31.0...v1.32.0) (2026-08-02)
 
 
