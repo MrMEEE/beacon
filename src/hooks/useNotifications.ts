@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { CalendarEvent } from '../types';
 import { HomeAssistantClient } from '../api/homeassistant';
+import beaconIcon from '../assets/beacon-app-icon.svg';
 
 const CHECK_INTERVAL = 60 * 1000; // 1 minute
 const NOTIFY_BEFORE_MS = 15 * 60 * 1000; // 15 minutes
@@ -48,7 +49,7 @@ export function useNotifications(
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification(event.title, {
             body,
-            icon: '/beacon-icon.svg',
+            icon: beaconIcon,
             tag: `beacon-event-${event.id}`,
           });
         }

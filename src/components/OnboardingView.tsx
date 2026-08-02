@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ArrowRight, Check, ExternalLink, Key, LogIn } from 'lucide-react';
-import beaconLogo from '../assets/beacon-icon.svg';
+import beaconLogo from '../assets/beacon-app-icon.svg';
 
 // ---------------------------------------------------------------------------
 // Types

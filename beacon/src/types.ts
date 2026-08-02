@@ -36,13 +36,14 @@ export interface ForecastDay {
   tempLow: number;
 }
 
+/* 4-category color set (Sage/Lavender/Coral/Teal) — see docs/design-tokens.md.
+   Rose was cut (least distinguishable from Coral); Ocean/Soft-Blue merged into
+   the primary accent, so it's not part of the category rotation. */
 export const CALENDAR_COLORS: Record<number, string> = {
-  0: '#3b82f6', // blue
-  1: '#22c55e', // green
-  2: '#a855f7', // purple
-  3: '#f97316', // orange
-  4: '#ec4899', // pink
-  5: '#14b8a6', // teal
+  0: '#10b981', // sage
+  1: '#8b5cf6', // lavender
+  2: '#f97316', // coral
+  3: '#14b8a6', // teal
 };
 
 export function getCalendarColor(index: number): string {
@@ -51,11 +52,9 @@ export function getCalendarColor(index: number): string {
 
 /* Maps a full-saturation calendar color to its pastel variant for event blocks */
 const PASTEL_MAP: Record<string, string> = {
-  '#3b82f6': '#bfdbfe', // blue
-  '#22c55e': '#bbf7d0', // green
-  '#a855f7': '#ddd6fe', // purple
-  '#f97316': '#fed7aa', // orange
-  '#ec4899': '#fbcfe8', // pink
+  '#10b981': '#bbf7d0', // sage
+  '#8b5cf6': '#ddd6fe', // lavender
+  '#f97316': '#fed7aa', // coral
   '#14b8a6': '#99f6e4', // teal
 };
 

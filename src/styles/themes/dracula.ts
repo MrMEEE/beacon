@@ -23,7 +23,7 @@ export const dracula: Theme = {
     '#F1FA8C', // yellow
   ],
   fonts: {
-    display: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+    display: "'Fraunces', serif",
     body: "'Inter', system-ui, -apple-system, sans-serif",
     mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
   },

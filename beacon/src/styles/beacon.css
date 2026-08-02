@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* --- Google Fonts Import --- */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 /* --- Custom Properties --- */
 :root {
@@ -27,18 +27,27 @@
   --accent: #3b82f6;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
+  /* These pastel/full color pairs power the family-member/calendar color
+     system (EventCard borders, timer buttons, role badges, etc). The
+     *-full values are aliased to the canonical tokens in tokens.css
+     (imported before this file in main.tsx) so there's a single source of
+     truth for each hue instead of two independently-maintained hex lists.
+     See docs/design-tokens.md. */
   --color-blue: #bfdbfe;
-  --color-blue-full: #3b82f6;
+  --color-blue-full: var(--color-accent, #3b82f6);
   --color-green: #bbf7d0;
-  --color-green-full: #22c55e;
+  --color-green-full: var(--color-success, #22c55e);
   --color-purple: #ddd6fe;
-  --color-purple-full: #8b5cf6;
+  --color-purple-full: var(--color-cat-lavender, #8b5cf6);
   --color-orange: #fed7aa;
-  --color-orange-full: #f97316;
-  --color-pink: #fbcfe8;
-  --color-pink-full: #ec4899;
+  --color-orange-full: var(--color-cat-coral, #f97316);
+  /* Rose (#ec4899) was cut from the palette (least distinguishable from
+     Coral) — this legacy token now points at Coral, the nearest surviving
+     hue, instead of a dead/cut color. See docs/design-tokens.md. */
+  --color-pink: #fed7aa;
+  --color-pink-full: var(--color-cat-coral, #f97316);
   --color-teal: #99f6e4;
-  --color-teal-full: #14b8a6;
+  --color-teal-full: var(--color-cat-teal, #14b8a6);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -53,7 +62,7 @@
 
   --transition: 200ms ease;
 
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Fraunces', -apple-system, BlinkMacSystemFont, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   --header-height: 64px;
@@ -1191,7 +1200,7 @@ a:focus:not(:focus-visible) {
   left: 0;
   right: 0;
   height: 2px;
-  background: #ef4444;
+  background: var(--color-error, #ef4444);
   z-index: 10;
   pointer-events: none;
 }
@@ -1204,7 +1213,7 @@ a:focus:not(:focus-visible) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--color-error, #ef4444);
 }
 
 /* --- FAB (Add Event) --- */
@@ -1264,7 +1273,10 @@ a:focus:not(:focus-visible) {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f59e0b;
+  /* "Connecting" pending state — deliberately var(--color-warning), NOT brand
+     gold, so this transient status dot is never visually identical to the
+     Beacon logo mark. See docs/design-tokens.md. */
+  background: var(--color-warning, #d97706);
   animation: pulse 2s infinite;
 }
 
@@ -1494,11 +1506,11 @@ a:focus:not(:focus-visible) {
 
 .btn--danger {
   background: transparent;
-  color: #ef4444;
+  color: var(--color-error, #ef4444);
 }
 
 .btn--danger:hover {
-  background: rgba(239, 68, 68, 0.06);
+  background: color-mix(in srgb, var(--color-error, #ef4444) 6%, transparent);
 }
 
 /* --- Animations --- */

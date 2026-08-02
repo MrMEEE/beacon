@@ -172,13 +172,13 @@
 }
 
 .fm-btn-icon--danger:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--color-error, #ef4444) 8%, transparent);
+  color: var(--color-error, #ef4444);
 }
 
 .fm-btn-icon--confirm {
-  background: rgba(239, 68, 68, 0.08) !important;
-  color: #ef4444 !important;
+  background: color-mix(in srgb, var(--color-error, #ef4444) 8%, transparent) !important;
+  color: var(--color-error, #ef4444) !important;
 }
 
 .fm-confirm-text {

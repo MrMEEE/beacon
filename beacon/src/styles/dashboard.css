@@ -116,7 +116,7 @@
   font-size: 48px;
   font-weight: 700;
   line-height: 1;
-  color: var(--accent, var(--color-blue-full));
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
 }
@@ -357,18 +357,18 @@
 
 /* --- Event Card --- */
 .event-card {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .event-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .event-card-calendar {

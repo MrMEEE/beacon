@@ -67,7 +67,7 @@
 }
 
 .timer-display--finished {
-  color: #ef4444;
+  color: var(--color-error, #ef4444);
   animation: timer-pulse 1s ease infinite;
 }
 
@@ -116,12 +116,12 @@
 
 /* --- Dismiss Button --- */
 .timer-btn--dismiss {
-  background: color-mix(in srgb, #ef4444 15%, var(--bg-secondary));
-  color: #ef4444;
+  background: color-mix(in srgb, var(--color-error, #ef4444) 15%, var(--bg-secondary));
+  color: var(--color-error, #ef4444);
 }
 
 .timer-btn--dismiss:hover {
-  background: color-mix(in srgb, #ef4444 25%, var(--bg-secondary));
+  background: color-mix(in srgb, var(--color-error, #ef4444) 25%, var(--bg-secondary));
 }
 
 /* --- Multi-Timer: Add Section --- */
@@ -188,8 +188,8 @@
 }
 
 .timer-card--finished {
-  background: color-mix(in srgb, #ef4444 10%, var(--bg-primary));
-  border-color: color-mix(in srgb, #ef4444 30%, var(--border));
+  background: color-mix(in srgb, var(--color-error, #ef4444) 10%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--color-error, #ef4444) 30%, var(--border));
   animation: timer-card-pulse 1.5s ease infinite;
 }
 
@@ -481,8 +481,8 @@
 }
 
 .countdown-remove-btn:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-error, #ef4444);
+  background: color-mix(in srgb, var(--color-error, #ef4444) 8%, transparent);
 }
 
 /* --- Timer Slide Panel (from sidebar) --- */
