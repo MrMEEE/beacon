@@ -1,3 +1,15 @@
+# [1.32.0](https://github.com/asachs01/beacon/compare/v1.31.0...v1.32.0) (2026-08-02)
+
+
+### Bug Fixes
+
+* **tokens:** wire the 10-role color tokens into real consumers ([fb9604c](https://github.com/asachs01/beacon/commit/fb9604c69c6402f232de3189ab10edb6d1fe5cac)), closes [#ef4444](https://github.com/asachs01/beacon/issues/ef4444) [#ef4444](https://github.com/asachs01/beacon/issues/ef4444) [#f59e0b](https://github.com/asachs01/beacon/issues/f59e0b)
+
+
+### Features
+
+* **icon:** ship simplified lighthouse icon system ([9cc1806](https://github.com/asachs01/beacon/commit/9cc1806fd0371322094377ab3081a44731478436))
+
 # [1.31.0](https://github.com/asachs01/beacon/compare/v1.30.2...v1.31.0) (2026-07-05)
 
 
