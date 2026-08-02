@@ -20,7 +20,29 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout
+      # actions/checkout@v4 defaults to github.sha, which is PINNED to
+      # whatever commit triggered this workflow run. When invoked via
+      # workflow_call right after the `release` job, semantic-release has
+      # already pushed a NEW commit (the version bump to config.yaml) --
+      # but that new commit is invisible to this checkout unless we
+      # explicitly ask for the branch HEAD instead of the frozen sha.
+      # Without this, the image gets built one version behind every time
+      # (confirmed: v1.32.3's release run built and tagged the image as
+      # 1.32.2, the pre-bump version, because of exactly this).
+      #
+      # github.ref_name is 'main' for the workflow_call path (the caller was
+      # triggered by a push to main) and a tag name (e.g. 'v1.32.3') for the
+      # legacy manual release/push-tag path -- so it reliably distinguishes
+      # the two cases without relying on github.event_name, which doesn't
+      # behave as expected inside a called reusable workflow (see PR #9).
+      - name: Checkout (post-release main HEAD)
+        if: github.ref_name == 'main'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Checkout (manual release/tag)
+        if: github.ref_name != 'main'
         uses: actions/checkout@v4
 
       # release/push-tag triggers (e.g. a manually-created tag/release) may
