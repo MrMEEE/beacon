@@ -14,7 +14,7 @@ import {
   MoreHorizontal,
   X,
 } from 'lucide-react';
-import beaconIcon from '../assets/beacon-icon.svg';
+import beaconIcon from '../assets/beacon-app-icon.svg';
 
 export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'tasks' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'weather' | 'settings';
 

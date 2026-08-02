@@ -48,7 +48,7 @@ export function useNotifications(
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification(event.title, {
             body,
-            icon: '/beacon-icon.svg',
+            icon: '/src/assets/beacon-app-icon.svg',
             tag: `beacon-event-${event.id}`,
           });
         }

@@ -42,7 +42,8 @@ html[data-theme] .modal-overlay {
   --accent-green: #4ade80;
   --accent-purple: #c084fc;
   --accent-orange: #fb923c;
-  --accent-pink: #f472b6;
+  /* Rose cut from the palette — repointed to a brighter Coral for dark bg */
+  --accent-pink: #fb923c;
   --accent-teal: #2dd4bf;
 }
 
@@ -69,7 +70,8 @@ html[data-theme] .modal-overlay {
   --accent-green: #22c55e;
   --accent-purple: #a855f7;
   --accent-orange: #f97316;
-  --accent-pink: #ec4899;
+  /* Rose cut from the palette — repointed to Coral, the nearest surviving hue */
+  --accent-pink: #f97316;
   --accent-teal: #14b8a6;
 }
 
