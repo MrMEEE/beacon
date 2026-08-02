@@ -16,6 +16,21 @@ cp Dockerfile run.sh CHANGELOG.md beacon/
 ```
 Both `config.yaml` and `beacon/config.yaml` must have matching versions.
 
+**The root-level `Dockerfile` builds from repo-root context (`context: .` in
+`.github/workflows/build-addon.yml`), not from `beacon/`.** So anything that
+Dockerfile `COPY`s -- including `custom_intents/` and `custom_sentences/` --
+must also exist at the repo root, mirrored from `beacon/`, or the Docker
+build fails with `"failed to calculate checksum ... not found"`. This bit
+us once already: those two dirs existed only under `beacon/` and the image
+build silently never ran for months (see the CI/release-trigger bug below),
+so nobody caught it until the pipeline was fixed and the build actually
+executed. When adding root-level content Dockerfile depends on, sync it
+the same way:
+```bash
+rsync -av --delete beacon/custom_intents/ custom_intents/
+rsync -av --delete beacon/custom_sentences/ custom_sentences/
+```
+
 ### HA Add-on Auth: Long-Lived Token in Config
 SUPERVISOR_TOKEN only works container-side (http://supervisor/core). postMessage auth doesn't work in HA companion app WKWebView. The `ha_token` config option (schema: password) with a user-provided long-lived access token is the only reliable browser-side auth approach.
 
