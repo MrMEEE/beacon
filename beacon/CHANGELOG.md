@@ -1,3 +1,10 @@
+## [1.32.2](https://github.com/asachs01/beacon/compare/v1.32.1...v1.32.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** correct workflow_call detection in build-addon.yml ([949b8bb](https://github.com/asachs01/beacon/commit/949b8bb8303c3ebd3a77a1ac27edcf80e5342a7d)), closes [#1](https://github.com/asachs01/beacon/issues/1)
+
 ## [1.32.1](https://github.com/asachs01/beacon/compare/v1.32.0...v1.32.1) (2026-08-02)
 
 
