@@ -1,3 +1,10 @@
+## [1.32.3](https://github.com/asachs01/beacon/compare/v1.32.2...v1.32.3) (2026-08-02)
+
+
+### Bug Fixes
+
+* **docker:** add missing custom_intents/custom_sentences at repo root ([c14f854](https://github.com/asachs01/beacon/commit/c14f854a60033d0e2248b5f06f2cdfb769382585)), closes [#8](https://github.com/asachs01/beacon/issues/8) [#9](https://github.com/asachs01/beacon/issues/9) [8/#9](https://github.com/asachs01/beacon/issues/9)
+
 ## [1.32.2](https://github.com/asachs01/beacon/compare/v1.32.1...v1.32.2) (2026-08-02)
 
 
