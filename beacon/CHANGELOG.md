@@ -1,3 +1,10 @@
+## [1.32.4](https://github.com/asachs01/beacon/compare/v1.32.3...v1.32.4) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** checkout the post-release commit in build-addon.yml, not the stale pre-bump sha ([17d2bf9](https://github.com/asachs01/beacon/commit/17d2bf9b6d235f89541fac78fbe167dcd9cccf6d))
+
 ## [1.32.3](https://github.com/asachs01/beacon/compare/v1.32.2...v1.32.3) (2026-08-02)
 
 
