@@ -1194,7 +1194,7 @@ a:focus:not(:focus-visible) {
   left: 0;
   right: 0;
   height: 2px;
-  background: #ef4444;
+  background: var(--color-error, #ef4444);
   z-index: 10;
   pointer-events: none;
 }
@@ -1207,7 +1207,7 @@ a:focus:not(:focus-visible) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--color-error, #ef4444);
 }
 
 /* --- FAB (Add Event) --- */
@@ -1267,7 +1267,10 @@ a:focus:not(:focus-visible) {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f59e0b;
+  /* "Connecting" pending state — deliberately var(--color-warning), NOT brand
+     gold, so this transient status dot is never visually identical to the
+     Beacon logo mark. See docs/design-tokens.md. */
+  background: var(--color-warning, #d97706);
   animation: pulse 2s infinite;
 }
 
@@ -1497,11 +1500,11 @@ a:focus:not(:focus-visible) {
 
 .btn--danger {
   background: transparent;
-  color: #ef4444;
+  color: var(--color-error, #ef4444);
 }
 
 .btn--danger:hover {
-  background: rgba(239, 68, 68, 0.06);
+  background: color-mix(in srgb, var(--color-error, #ef4444) 6%, transparent);
 }
 
 /* --- Animations --- */
