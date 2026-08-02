@@ -27,21 +27,27 @@
   --accent: #3b82f6;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
+  /* These pastel/full color pairs power the family-member/calendar color
+     system (EventCard borders, timer buttons, role badges, etc). The
+     *-full values are aliased to the canonical tokens in tokens.css
+     (imported before this file in main.tsx) so there's a single source of
+     truth for each hue instead of two independently-maintained hex lists.
+     See docs/design-tokens.md. */
   --color-blue: #bfdbfe;
-  --color-blue-full: #3b82f6;
+  --color-blue-full: var(--color-accent, #3b82f6);
   --color-green: #bbf7d0;
-  --color-green-full: #22c55e;
+  --color-green-full: var(--color-success, #22c55e);
   --color-purple: #ddd6fe;
-  --color-purple-full: #8b5cf6;
+  --color-purple-full: var(--color-cat-lavender, #8b5cf6);
   --color-orange: #fed7aa;
-  --color-orange-full: #f97316;
+  --color-orange-full: var(--color-cat-coral, #f97316);
   /* Rose (#ec4899) was cut from the palette (least distinguishable from
      Coral) — this legacy token now points at Coral, the nearest surviving
      hue, instead of a dead/cut color. See docs/design-tokens.md. */
   --color-pink: #fed7aa;
-  --color-pink-full: #f97316;
+  --color-pink-full: var(--color-cat-coral, #f97316);
   --color-teal: #99f6e4;
-  --color-teal-full: #14b8a6;
+  --color-teal-full: var(--color-cat-teal, #14b8a6);
 
   --radius-sm: 8px;
   --radius-md: 12px;
