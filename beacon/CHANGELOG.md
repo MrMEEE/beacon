@@ -1,3 +1,10 @@
+## [1.32.5](https://github.com/asachs01/beacon/compare/v1.32.4...v1.32.5) (2026-08-03)
+
+
+### Bug Fixes
+
+* **build:** exclude test files from production tsc build ([#12](https://github.com/asachs01/beacon/issues/12)) ([1bbb873](https://github.com/asachs01/beacon/commit/1bbb8736e87d4f8607e21ea6c14d041a5f5174cd))
+
 ## [1.32.4](https://github.com/asachs01/beacon/compare/v1.32.3...v1.32.4) (2026-08-02)
 
 
