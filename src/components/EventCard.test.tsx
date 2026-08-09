@@ -38,10 +38,11 @@ describe('EventCard', () => {
     expect(card.style.borderLeft).toBe('4px solid rgb(16, 185, 129)'); // #10b981 sage
   });
 
-  it('falls back to neutral gray for an unrecognized event color rather than throwing', () => {
+  it('renders a custom hex color that is not one of the 4 category colors, rather than falling back to gray', () => {
     const { container } = render(<EventCard event={makeEvent({ color: '#000000' })} />);
     const card = container.querySelector('.event-card') as HTMLElement;
-    expect(card.style.backgroundColor).toBe('rgb(229, 231, 235)'); // #e5e7eb fallback
+    expect(card.style.backgroundColor).not.toBe('rgb(229, 231, 235)'); // not the gray fallback
+    expect(card.style.borderLeft).toBe('4px solid rgb(0, 0, 0)');
   });
 
   it('is not clickable and has no role when onClick is omitted (e.g. read-only contexts)', () => {

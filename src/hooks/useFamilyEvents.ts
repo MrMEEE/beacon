@@ -24,11 +24,14 @@ export function useFamilyEvents(
       isSameDay(startOfDay(parseISO(e.start)), today),
     );
 
-    // Build a calendarId → memberId lookup
+    // Build a calendarId → memberId lookup (primary + additional calendars)
     const calToMember = new Map<string, string>();
     for (const m of members) {
       if (m.calendar_entity) {
         calToMember.set(m.calendar_entity, m.id);
+      }
+      for (const entity of m.additional_calendar_entities || []) {
+        calToMember.set(entity, m.id);
       }
     }
 

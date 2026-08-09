@@ -165,6 +165,7 @@ interface MemberForm {
   role: 'parent' | 'child';
   pin: string;
   calendar_entity: string;
+  additional_calendar_entities: string[];
 }
 
 const EMPTY_FORM: MemberForm = {
@@ -174,6 +175,7 @@ const EMPTY_FORM: MemberForm = {
   role: 'child',
   pin: '',
   calendar_entity: '',
+  additional_calendar_entities: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -266,6 +268,7 @@ export function SettingsView({
       role: member.role,
       pin: member.pin ?? '',
       calendar_entity: member.calendar_entity ?? '',
+      additional_calendar_entities: member.additional_calendar_entities ?? [],
     });
     setEditingMember(member.id);
     setMemberFormMode('edit');
@@ -280,6 +283,9 @@ export function SettingsView({
       role: memberForm.role,
       pin: memberForm.pin || undefined,
       calendar_entity: memberForm.calendar_entity || undefined,
+      additional_calendar_entities: memberForm.additional_calendar_entities.length > 0
+        ? memberForm.additional_calendar_entities
+        : undefined,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
@@ -1010,6 +1016,69 @@ export function SettingsView({
                   {cal.name}
                 </option>
               ))}
+            </select>
+          </div>
+          <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+            <div>
+              <div className="settings-row-label">Additional Calendars</div>
+              <div className="settings-row-sublabel">
+                Group other calendars (e.g. a sports team) under this member too
+              </div>
+            </div>
+            {memberForm.additional_calendar_entities.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {memberForm.additional_calendar_entities.map((entityId) => {
+                  const cal = calendars.find((c) => c.id === entityId);
+                  return (
+                    <div
+                      key={entityId}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
+                    >
+                      <span className="settings-row-sublabel">{cal?.name ?? entityId}</span>
+                      <button
+                        type="button"
+                        className="settings-btn"
+                        onClick={() =>
+                          setMemberForm((f) => ({
+                            ...f,
+                            additional_calendar_entities: f.additional_calendar_entities.filter(
+                              (id) => id !== entityId,
+                            ),
+                          }))
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <select
+              className="settings-select"
+              value=""
+              onChange={(e) => {
+                const id = e.target.value;
+                if (!id) return;
+                setMemberForm((f) =>
+                  f.additional_calendar_entities.includes(id)
+                    ? f
+                    : { ...f, additional_calendar_entities: [...f.additional_calendar_entities, id] },
+                );
+              }}
+            >
+              <option value="">+ Add another calendar…</option>
+              {calendars
+                .filter(
+                  (cal) =>
+                    cal.id !== memberForm.calendar_entity &&
+                    !memberForm.additional_calendar_entities.includes(cal.id),
+                )
+                .map((cal) => (
+                  <option key={cal.id} value={cal.id}>
+                    {cal.name}
+                  </option>
+                ))}
             </select>
           </div>
           <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

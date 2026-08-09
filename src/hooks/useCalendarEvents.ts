@@ -1,17 +1,30 @@
 import { useState, useCallback, useRef } from 'react';
-import { CalendarEvent, CalendarInfo, getCalendarColor } from '../types';
+import { CalendarEvent, CalendarInfo, CalendarColorMember, resolveCalendarColor } from '../types';
 import { haFetch, hasToken } from '../api/ha-rest';
 
 /**
  * Calendar events hook — uses HA REST API via haFetch.
  * Works with both direct HA connections and the add-on API proxy.
  * The `connected` flag indicates whether the HA API is reachable.
+ *
+ * `colorOptions` lets callers pass user-customized calendar colors and
+ * family members so calendar/event colors resolve identically here as on
+ * the Dashboard (user override > family-member-linked color > positional
+ * palette fallback) — see resolveCalendarColor in ../types.
  */
-export function useCalendarEvents(connected: boolean) {
+export function useCalendarEvents(
+  connected: boolean,
+  colorOptions?: {
+    calendarColors?: Record<string, string>;
+    members?: CalendarColorMember[];
+  },
+) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const calendarsRef = useRef<CalendarInfo[]>([]);
+  const colorOptionsRef = useRef(colorOptions);
+  colorOptionsRef.current = colorOptions;
 
   const fetchCalendars = useCallback(async () => {
     if (!connected && !hasToken()) return [];
@@ -21,7 +34,7 @@ export function useCalendarEvents(connected: boolean) {
       const cals = data.map((cal, index) => ({
         id: cal.entity_id,
         name: cal.name,
-        color: getCalendarColor(index),
+        color: resolveCalendarColor(cal.entity_id, index, colorOptionsRef.current),
       }));
       calendarsRef.current = cals;
       setCalendars(cals);
@@ -56,7 +69,6 @@ export function useCalendarEvents(connected: boolean) {
             recurrence_id?: string;
           }>;
 
-          const colorIndex = cals.findIndex(c => c.id === cal.id);
           for (const ev of (result || [])) {
             const startStr = typeof ev.start === 'string' ? ev.start : (ev.start.dateTime || ev.start.date);
             const endStr = typeof ev.end === 'string' ? ev.end : (ev.end.dateTime || ev.end.date);
@@ -80,7 +92,7 @@ export function useCalendarEvents(connected: boolean) {
               description: ev.description,
               calendarId: cal.id,
               calendarName: cal.name,
-              color: getCalendarColor(colorIndex),
+              color: cal.color,
               hasStableId: !!realUid,
             });
           }

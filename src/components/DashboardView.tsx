@@ -70,7 +70,9 @@ export function DashboardView({
       .sort((a, b) => a.start.localeCompare(b.start));
   }, [events]);
 
-  const hasMemberCalendars = members.some((m) => m.calendar_entity);
+  const hasMemberCalendars = members.some(
+    (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,
+  );
 
   // Group the next 7 days of events for the Classic "This Week" column
   const weekEvents = useMemo(() => {
