@@ -12,10 +12,20 @@ interface ChoresPanelProps {
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
+const EMPTY_CHORE_FORM = {
+  name: '',
+  value_cents: 100,
+  frequency: 'daily' as Chore['frequency'],
+  assigned_to: [] as string[],
+  icon: '🧹',
+};
+
 export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   const { members } = useFamily();
   const {
     addChore,
+    updateChore,
+    removeChore,
     completeChore,
     uncompleteChore,
     isChoreCompletedToday,
@@ -25,31 +35,60 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   } = useChores();
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newChore, setNewChore] = useState({
-    name: '',
-    value_cents: 100,
-    frequency: 'daily' as Chore['frequency'],
-    assigned_to: [] as string[],
-    icon: '🧹',
-  });
+  const [editingChoreId, setEditingChoreId] = useState<string | null>(null);
+  const [newChore, setNewChore] = useState({ ...EMPTY_CHORE_FORM });
+
+  const isEditing = editingChoreId !== null;
 
   const handleAddChore = () => {
     if (!newChore.name.trim() || newChore.assigned_to.length === 0) return;
-    addChore({
-      name: newChore.name.trim(),
-      value_cents: newChore.value_cents,
-      frequency: newChore.frequency,
-      assigned_to: newChore.assigned_to,
-      icon: newChore.icon,
-    });
-    setNewChore({
-      name: '',
-      value_cents: 100,
-      frequency: 'daily',
-      assigned_to: [],
-      icon: '🧹',
-    });
+
+    if (isEditing) {
+      updateChore(editingChoreId, {
+        name: newChore.name.trim(),
+        value_cents: newChore.value_cents,
+        frequency: newChore.frequency,
+        assigned_to: newChore.assigned_to,
+        icon: newChore.icon,
+      });
+    } else {
+      addChore({
+        name: newChore.name.trim(),
+        value_cents: newChore.value_cents,
+        frequency: newChore.frequency,
+        assigned_to: newChore.assigned_to,
+        icon: newChore.icon,
+      });
+    }
+
+    setNewChore({ ...EMPTY_CHORE_FORM });
     setShowAddForm(false);
+    setEditingChoreId(null);
+  };
+
+  const handleStartEdit = (chore: Chore) => {
+    setNewChore({
+      name: chore.name,
+      value_cents: chore.value_cents,
+      frequency: chore.frequency,
+      assigned_to: [...chore.assigned_to],
+      icon: chore.icon || '🧹',
+    });
+    setEditingChoreId(chore.id);
+    setShowAddForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setShowAddForm(false);
+    setEditingChoreId(null);
+    setNewChore({ ...EMPTY_CHORE_FORM });
+  };
+
+  const handleDeleteChore = (id: string) => {
+    removeChore(id);
+    if (editingChoreId === id) {
+      handleCancelForm();
+    }
   };
 
   const toggleAssigned = (memberId: string) => {
@@ -133,6 +172,8 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     isCompleted={isChoreCompletedToday(chore.id, member.id)}
                     onComplete={() => completeChore(chore.id, member.id)}
                     onUncomplete={() => uncompleteChore(chore.id, member.id)}
+                    onEdit={() => handleStartEdit(chore)}
+                    onDelete={() => handleDeleteChore(chore.id)}
                   />
                 ))}
               </div>
@@ -140,7 +181,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
           </div>
         ))}
 
-        {/* Add Chore */}
+        {/* Add / Edit Chore */}
         {(hasParent || members.length > 0) && (
           <>
             {!showAddForm ? (
@@ -153,7 +194,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
               </button>
             ) : (
               <div className="chores-add-form">
-                <h3 className="chores-add-title">New Chore</h3>
+                <h3 className="chores-add-title">{isEditing ? 'Edit Chore' : 'New Chore'}</h3>
 
                 {/* Icon picker */}
                 <div className="form-field">
@@ -245,7 +286,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                   <button
                     type="button"
                     className="btn btn--secondary"
-                    onClick={() => setShowAddForm(false)}
+                    onClick={handleCancelForm}
                   >
                     Cancel
                   </button>
@@ -255,7 +296,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     onClick={handleAddChore}
                     disabled={!newChore.name.trim() || newChore.assigned_to.length === 0}
                   >
-                    Add Chore
+                    {isEditing ? 'Save Changes' : 'Add Chore'}
                   </button>
                 </div>
               </div>

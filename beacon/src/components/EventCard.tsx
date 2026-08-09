@@ -3,9 +3,10 @@ import { CalendarEvent, getPastelColor, getFullColor } from '../types';
 
 interface EventCardProps {
   event: CalendarEvent;
+  onClick?: (event: CalendarEvent) => void;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, onClick }: EventCardProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
 
@@ -15,11 +16,15 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <div
-      className="event-card"
+      className={`event-card ${onClick ? 'event-card--clickable' : ''}`}
       style={{
         backgroundColor: pastel,
         borderLeft: `4px solid ${full}`,
       }}
+      onClick={onClick ? () => onClick(event) : undefined}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(event); } } : undefined}
     >
       <span className="event-card-calendar">{event.calendarName}</span>
       <span className="event-card-title">{event.title}</span>

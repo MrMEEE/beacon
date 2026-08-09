@@ -1,4 +1,4 @@
-import { CalendarEvent, CalendarInfo, WeatherData, getCalendarColor } from '../types';
+import { CalendarEvent, CalendarInfo, WeatherData, CalendarColorMember, resolveCalendarColor } from '../types';
 
 type MessageHandler = (message: HAMessage) => void;
 
@@ -145,7 +145,10 @@ export class HomeAssistantClient {
     return this.url.replace(/\/api\/websocket$/, '').replace(/^ws/, 'http');
   }
 
-  async getCalendars(): Promise<CalendarInfo[]> {
+  async getCalendars(colorOptions?: {
+    calendarColors?: Record<string, string>;
+    members?: CalendarColorMember[];
+  }): Promise<CalendarInfo[]> {
     const baseUrl = this.getRestUrl();
     const response = await fetch(`${baseUrl}/api/calendars`, {
       headers: { Authorization: `Bearer ${this.token}` },
@@ -156,7 +159,7 @@ export class HomeAssistantClient {
     return data.map((cal, index) => ({
       id: cal.entity_id,
       name: cal.name,
-      color: getCalendarColor(index),
+      color: resolveCalendarColor(cal.entity_id, index, colorOptions),
     }));
   }
 

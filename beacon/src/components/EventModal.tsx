@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, parseISO, addMonths } from 'date-fns';
 import { CalendarEvent, CalendarInfo, RecurrenceFrequency } from '../types';
 
 interface EventModalProps {
   event: CalendarEvent | null;
   calendars: CalendarInfo[];
-  onSave: (calendarId: string, data: EventFormData) => void;
-  onDelete: (calendarId: string, eventId: string) => void;
+  /** The user's configured default calendar (Settings > Calendar). Used as
+   *  the initial calendar selection for a NEW event; ignored when editing
+   *  an existing event (which keeps the event's own calendar). Falls back
+   *  to the first calendar in the list if unset/not a valid calendar id. */
+  defaultCalendarId?: string;
+  onSave: (calendarId: string, data: EventFormData) => void | Promise<void>;
+  onDelete: (calendarId: string, eventId: string) => void | Promise<void>;
   onClose: () => void;
   prefillDate?: string | null;
   prefillTime?: string | null;
@@ -47,9 +52,45 @@ function addHour(time: string): string {
   return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+/** Combine a yyyy-MM-dd date + HH:mm time into a Date for comparison/arithmetic. */
+function combineDateTime(dateStr: string, timeStr: string): Date {
+  return new Date(`${dateStr}T${timeStr}:00`);
+}
+
+/**
+ * Shift `endDate`/`endTime` by the same duration as the shift applied to
+ * start, so editing an event's start time preserves its original length
+ * instead of leaving a stale (and potentially invalid, end <= start) end
+ * time behind.
+ */
+function shiftEnd(
+  oldStartDate: string,
+  oldStartTime: string,
+  endDate: string,
+  endTime: string,
+  newStartDate: string,
+  newStartTime: string,
+): { endDate: string; endTime: string } {
+  const oldStart = combineDateTime(oldStartDate, oldStartTime);
+  const oldEnd = combineDateTime(endDate, endTime);
+  const newStart = combineDateTime(newStartDate, newStartTime);
+
+  let durationMs = oldEnd.getTime() - oldStart.getTime();
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    durationMs = 60 * 60 * 1000; // fall back to 1hr if the prior range was invalid/zero
+  }
+
+  const newEnd = new Date(newStart.getTime() + durationMs);
+  return {
+    endDate: format(newEnd, 'yyyy-MM-dd'),
+    endTime: format(newEnd, 'HH:mm'),
+  };
+}
+
 export function EventModal({
   event,
   calendars,
+  defaultCalendarId,
   onSave,
   onDelete,
   onClose,
@@ -57,7 +98,8 @@ export function EventModal({
   prefillTime,
 }: EventModalProps) {
   const isEditing = !!event;
-  const defaultCalendar = calendars[0]?.id || '';
+  const isValidDefault = !!defaultCalendarId && calendars.some((c) => c.id === defaultCalendarId);
+  const defaultCalendar = (isValidDefault ? defaultCalendarId : calendars[0]?.id) || '';
   const defaultDate = prefillDate || format(new Date(), 'yyyy-MM-dd');
   const defaultStartTime = prefillTime || '09:00';
   const defaultEndTime = addHour(defaultStartTime);
@@ -77,7 +119,19 @@ export function EventModal({
     recurrenceEnd: defaultRecurrenceEnd,
   });
 
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Whether the user has manually edited the end date/time in this session.
+  // While false, changing the start auto-shifts the end to preserve the
+  // event's original duration. Once the user touches the end fields
+  // directly, we stop overriding their choice — unless the new start would
+  // land at or after the (now stale) end, in which case we still need to
+  // auto-shift to keep the range valid.
+  const endTouchedRef = useRef(false);
+
   useEffect(() => {
+    endTouchedRef.current = false;
     if (event) {
       setForm({
         summary: event.title,
@@ -92,22 +146,119 @@ export function EventModal({
         recurrenceEnd: event.recurrenceEnd || defaultRecurrenceEnd,
       });
     }
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.summary.trim()) return;
-    onSave(form.calendarId, form);
+  const updateField = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
+    setError(null);
+
+    if (key === 'endDate' || key === 'endTime') {
+      endTouchedRef.current = true;
+      setForm(prev => ({ ...prev, [key]: value }));
+      return;
+    }
+
+    if (key === 'startDate' || key === 'startTime') {
+      setForm(prev => {
+        const nextStartDate = key === 'startDate' ? (value as string) : prev.startDate;
+        const nextStartTime = key === 'startTime' ? (value as string) : prev.startTime;
+
+        const newStart = combineDateTime(nextStartDate, nextStartTime);
+        const currentEnd = combineDateTime(prev.endDate, prev.endTime);
+
+        // Guard against intermediate/incomplete input values (e.g. a
+        // native time input transiently firing an empty string mid-edit)
+        // producing an invalid Date — just accept the raw value without
+        // attempting a shift in that case; validation on submit will catch
+        // anything still invalid at that point.
+        if (Number.isNaN(newStart.getTime()) || Number.isNaN(currentEnd.getTime())) {
+          return { ...prev, [key]: value };
+        }
+
+        const needsShift = !endTouchedRef.current || newStart.getTime() >= currentEnd.getTime();
+
+        if (!needsShift) {
+          return { ...prev, [key]: value };
+        }
+
+        const shifted = shiftEnd(
+          prev.startDate,
+          prev.startTime,
+          prev.endDate,
+          prev.endTime,
+          nextStartDate,
+          nextStartTime,
+        );
+        return { ...prev, [key]: value, endDate: shifted.endDate, endTime: shifted.endTime };
+      });
+      return;
+    }
+
+    setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleDelete = () => {
-    if (event) {
-      onDelete(event.calendarId, event.id);
+  /** Returns an error message if the current form's range is invalid, else null. */
+  function validateRange(f: EventFormData): string | null {
+    if (f.allDay) {
+      // All-day events: end date must not be before the start date.
+      if (f.endDate < f.startDate) {
+        return 'End date cannot be before the start date.';
+      }
+    } else {
+      const start = combineDateTime(f.startDate, f.startTime);
+      const end = combineDateTime(f.endDate, f.endTime);
+      if (!(end.getTime() > start.getTime())) {
+        return 'End time must be after the start time.';
+      }
+    }
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.summary.trim()) {
+      setError('Title is required.');
+      return;
+    }
+
+    const rangeError = validateRange(form);
+    if (rangeError) {
+      setError(rangeError);
+      return;
+    }
+
+    if (isEditing && event && event.hasStableId === false) {
+      setError("This event can't be edited — it has no stable ID from its calendar provider.");
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+    try {
+      await onSave(form.calendarId, form);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save event. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const updateField = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+  const handleDelete = async () => {
+    if (!event) return;
+    if (event.hasStableId === false) {
+      setError("This event can't be deleted — it has no stable ID from its calendar provider.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      await onDelete(event.calendarId, event.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete event. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -256,17 +407,23 @@ export function EventModal({
             </div>
           </div>
 
+          {error && (
+            <div className="modal-error" role="alert">
+              {error}
+            </div>
+          )}
+
           <div className="modal-footer">
             {isEditing && (
-              <button type="button" className="btn btn--danger" onClick={handleDelete}>
+              <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={submitting}>
                 Delete
               </button>
             )}
             <div className="modal-footer-right">
-              <button type="button" className="btn btn--secondary" onClick={onClose}>
+              <button type="button" className="btn btn--secondary" onClick={onClose} disabled={submitting}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn--primary">
+              <button type="submit" className="btn btn--primary" disabled={submitting}>
                 {isEditing ? 'Save' : 'Create'}
               </button>
             </div>

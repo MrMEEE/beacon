@@ -200,6 +200,25 @@
   border-bottom: 2px solid var(--border-subtle);
 }
 
+.dash-member-header--clickable {
+  background: none;
+  border: none;
+  border-bottom: 2px solid var(--border-subtle);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: background var(--transition, 150ms ease);
+}
+
+.dash-member-header--clickable:hover {
+  background: var(--bg-hover);
+}
+
+.dash-member-col--selected .dash-member-header--clickable {
+  background: var(--bg-hover);
+}
+
 .dash-member-avatar {
   width: 36px;
   height: 36px;
@@ -376,6 +395,10 @@
   box-shadow: var(--shadow-md);
 }
 
+.event-card--clickable {
+  cursor: pointer;
+}
+
 .event-card-calendar {
   font-size: 11px;
   font-weight: 600;
@@ -478,6 +501,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .task-checklist-label--done {
@@ -486,6 +511,29 @@
 }
 
 .task-checklist-icon { font-size: 16px; line-height: 1; }
+
+.task-checklist-assignees {
+  display: flex;
+  align-items: center;
+  gap: -4px;
+  flex-shrink: 0;
+}
+
+.task-checklist-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  border: 1.5px solid;
+  margin-left: -6px;
+}
+
+.task-checklist-avatar:first-child {
+  margin-left: 0;
+}
 
 .task-checklist-empty {
   font-size: 16px;

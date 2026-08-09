@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { EventCard } from './EventCard';
 import { CalendarEvent } from '../types';
 
@@ -37,9 +38,27 @@ describe('EventCard', () => {
     expect(card.style.borderLeft).toBe('4px solid rgb(16, 185, 129)'); // #10b981 sage
   });
 
-  it('falls back to neutral gray for an unrecognized event color rather than throwing', () => {
+  it('renders a custom hex color that is not one of the 4 category colors, rather than falling back to gray', () => {
     const { container } = render(<EventCard event={makeEvent({ color: '#000000' })} />);
     const card = container.querySelector('.event-card') as HTMLElement;
-    expect(card.style.backgroundColor).toBe('rgb(229, 231, 235)'); // #e5e7eb fallback
+    expect(card.style.backgroundColor).not.toBe('rgb(229, 231, 235)'); // not the gray fallback
+    expect(card.style.borderLeft).toBe('4px solid rgb(0, 0, 0)');
+  });
+
+  it('is not clickable and has no role when onClick is omitted (e.g. read-only contexts)', () => {
+    const { container } = render(<EventCard event={makeEvent()} />);
+    const card = container.querySelector('.event-card') as HTMLElement;
+    expect(card).not.toHaveAttribute('role');
+    expect(card.className).not.toContain('event-card--clickable');
+  });
+
+  it('invokes onClick with the event when clicked, enabling edit-from-Dashboard', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const event = makeEvent();
+    render(<EventCard event={event} onClick={onClick} />);
+    const card = screen.getByRole('button');
+    await user.click(card);
+    expect(onClick).toHaveBeenCalledWith(event);
   });
 });

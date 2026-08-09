@@ -31,6 +31,7 @@ interface DashboardViewProps {
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   onWeatherClick?: () => void;
+  onEventClick?: (event: CalendarEvent) => void;
   members?: FamilyMember[];
   layout?: 'default' | 'classic' | 'compact';
 }
@@ -44,10 +45,20 @@ export function DashboardView({
   todoItems = [],
   onToggleTodo,
   onWeatherClick,
+  onEventClick,
   members = [],
   layout = 'default',
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
+  const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
+
+  const toggleMemberFilter = (memberId: string) => {
+    setSelectedMemberFilter((prev) => (prev === memberId ? null : memberId));
+  };
+
+  const filteredChores = selectedMemberFilter
+    ? chores.filter((c) => c.assigned_to.includes(selectedMemberFilter))
+    : chores;
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -68,7 +79,9 @@ export function DashboardView({
       .sort((a, b) => a.start.localeCompare(b.start));
   }, [events]);
 
-  const hasMemberCalendars = members.some((m) => m.calendar_entity);
+  const hasMemberCalendars = members.some(
+    (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,
+  );
 
   // Group the next 7 days of events for the Classic "This Week" column
   const weekEvents = useMemo(() => {
@@ -150,9 +163,10 @@ export function DashboardView({
           }
           return (
             <TaskChecklist
-              chores={chores}
+              chores={filteredChores}
               completedIds={completedChoreIds}
               onToggle={onToggleChore}
+              members={members}
             />
           );
         })()}
@@ -174,7 +188,7 @@ export function DashboardView({
               ) : (
                 <div className="dashboard-events-list">
                   {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               )}
@@ -192,7 +206,7 @@ export function DashboardView({
                   ) : (
                     <div className="dashboard-events-list">
                       {dayEvents.map((event) => (
-                        <EventCard key={event.id} event={event} />
+                        <EventCard key={event.id} event={event} onClick={onEventClick} />
                       ))}
                     </div>
                   )}
@@ -220,9 +234,16 @@ export function DashboardView({
           <div className="dash-family-grid" style={{ '--member-count': members.length } as React.CSSProperties}>
             {members.map((member) => {
               const memberEvents = byMember.get(member.id) || [];
+              const isSelected = selectedMemberFilter === member.id;
               return (
-                <section key={member.id} className="dash-member-col">
-                  <div className="dash-member-header">
+                <section key={member.id} className={`dash-member-col ${isSelected ? 'dash-member-col--selected' : ''}`}>
+                  <button
+                    type="button"
+                    className="dash-member-header dash-member-header--clickable"
+                    onClick={() => toggleMemberFilter(member.id)}
+                    aria-pressed={isSelected}
+                    aria-label={`Filter chores for ${member.name}`}
+                  >
                     <span
                       className="dash-member-avatar"
                       style={{ backgroundColor: member.color + '22', borderColor: member.color }}
@@ -232,13 +253,13 @@ export function DashboardView({
                     <span className="dash-member-name" style={{ color: member.color }}>
                       {member.name}
                     </span>
-                  </div>
+                  </button>
                   <div className="dash-member-events">
                     {memberEvents.length === 0 ? (
                       <div className="dash-member-empty">Nothing today</div>
                     ) : (
                       memberEvents.map((event) => (
-                        <EventCard key={event.id} event={event} />
+                        <EventCard key={event.id} event={event} onClick={onEventClick} />
                       ))
                     )}
                   </div>
@@ -255,7 +276,7 @@ export function DashboardView({
                 </div>
                 <div className="dash-member-events">
                   {other.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               </section>
@@ -271,7 +292,7 @@ export function DashboardView({
               ) : (
                 <div className="dashboard-events-list">
                   {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               )}
