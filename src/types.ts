@@ -12,6 +12,17 @@ export interface CalendarEvent {
   color: string;
   recurrence?: RecurrenceFrequency;
   recurrenceEnd?: string;
+  /**
+   * Whether this event has a real, stable UID from its calendar provider
+   * (HA's `uid` or `recurrence_id`), as opposed to a synthetic composite
+   * fallback id assigned client-side when the provider didn't return one.
+   * `undefined` means "not applicable" (e.g. locally-stored Beacon events,
+   * which always have a real, stable id). Only ever explicitly `false` for
+   * HA-backed events without a usable uid — edit/delete should be blocked
+   * against HA's calendar services in that case, since the fallback id
+   * isn't a real event uid the service will recognize.
+   */
+  hasStableId?: boolean;
 }
 
 export interface CalendarInfo {

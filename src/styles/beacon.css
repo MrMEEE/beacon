@@ -1360,6 +1360,17 @@ a:focus:not(:focus-visible) {
   gap: 16px;
 }
 
+.modal-error {
+  margin: 0 24px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #dc2626;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .modal-footer {
   display: flex;
   align-items: center;

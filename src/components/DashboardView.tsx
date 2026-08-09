@@ -31,6 +31,7 @@ interface DashboardViewProps {
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   onWeatherClick?: () => void;
+  onEventClick?: (event: CalendarEvent) => void;
   members?: FamilyMember[];
   layout?: 'default' | 'classic' | 'compact';
 }
@@ -44,6 +45,7 @@ export function DashboardView({
   todoItems = [],
   onToggleTodo,
   onWeatherClick,
+  onEventClick,
   members = [],
   layout = 'default',
 }: DashboardViewProps) {
@@ -174,7 +176,7 @@ export function DashboardView({
               ) : (
                 <div className="dashboard-events-list">
                   {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               )}
@@ -192,7 +194,7 @@ export function DashboardView({
                   ) : (
                     <div className="dashboard-events-list">
                       {dayEvents.map((event) => (
-                        <EventCard key={event.id} event={event} />
+                        <EventCard key={event.id} event={event} onClick={onEventClick} />
                       ))}
                     </div>
                   )}
@@ -238,7 +240,7 @@ export function DashboardView({
                       <div className="dash-member-empty">Nothing today</div>
                     ) : (
                       memberEvents.map((event) => (
-                        <EventCard key={event.id} event={event} />
+                        <EventCard key={event.id} event={event} onClick={onEventClick} />
                       ))
                     )}
                   </div>
@@ -255,7 +257,7 @@ export function DashboardView({
                 </div>
                 <div className="dash-member-events">
                   {other.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               </section>
@@ -271,7 +273,7 @@ export function DashboardView({
               ) : (
                 <div className="dashboard-events-list">
                   {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event.id} event={event} onClick={onEventClick} />
                   ))}
                 </div>
               )}

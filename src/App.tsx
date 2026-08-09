@@ -237,41 +237,64 @@ export function App() {
   }, []);
 
   const handleSaveEvent = useCallback(async (calendarId: string, data: EventFormData) => {
+    const eventData = data.allDay
+      ? {
+          summary: data.summary,
+          start_date: data.startDate,
+          end_date: data.endDate,
+          description: data.description || undefined,
+        }
+      : {
+          summary: data.summary,
+          start_date_time: `${data.startDate}T${data.startTime}:00`,
+          end_date_time: `${data.endDate}T${data.endTime}:00`,
+          description: data.description || undefined,
+        };
+
+    // Build rrule if recurrence is set
+    if (data.recurrence && data.recurrence !== 'none') {
+      const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' } as const;
+      const freq = freqMap[data.recurrence];
+      const until = data.recurrenceEnd.replace(/-/g, '') + 'T235959Z';
+      (eventData as Record<string, unknown>).rrule = `FREQ=${freq};UNTIL=${until}`;
+    }
+
     try {
-      const eventData = data.allDay
-        ? {
-            summary: data.summary,
-            start_date: data.startDate,
-            end_date: data.endDate,
-            description: data.description || undefined,
-          }
-        : {
-            summary: data.summary,
-            start_date_time: `${data.startDate}T${data.startTime}:00`,
-            end_date_time: `${data.endDate}T${data.endTime}:00`,
-            description: data.description || undefined,
-          };
-
-      // Build rrule if recurrence is set
-      if (data.recurrence && data.recurrence !== 'none') {
-        const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' } as const;
-        const freq = freqMap[data.recurrence];
-        const until = data.recurrenceEnd.replace(/-/g, '') + 'T235959Z';
-        (eventData as Record<string, unknown>).rrule = `FREQ=${freq};UNTIL=${until}`;
+      if (selectedEvent) {
+        // Editing an existing event — update in place rather than creating
+        // a duplicate. `selectedEvent.calendarId` is the event's original
+        // calendar; if the user changed the calendar in the form, move it
+        // by deleting from the old calendar and creating on the new one
+        // (HA's update_event can't move an event across entities).
+        if (selectedEvent.hasStableId === false) {
+          throw new Error("This event can't be edited — it has no stable ID from its calendar provider.");
+        }
+        if (calendarId !== selectedEvent.calendarId) {
+          await deleteEvent(selectedEvent.calendarId, selectedEvent.id);
+          await createEvent(calendarId, eventData);
+        } else {
+          await updateEvent(calendarId, selectedEvent.id, eventData);
+        }
+      } else {
+        await createEvent(calendarId, eventData);
       }
-
-      await createEvent(calendarId, eventData);
 
       await refetchEventsForWeek(visibleWeekStart);
 
       handleCloseModal();
     } catch (err) {
       console.error('Failed to save event:', err);
+      // Re-throw so EventModal can surface an inline error to the user
+      // instead of the save silently appearing to do nothing.
+      throw err;
     }
-  }, [createEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
+  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
     try {
+      if (selectedEvent && selectedEvent.id === eventId && selectedEvent.hasStableId === false) {
+        throw new Error("This event can't be deleted — it has no stable ID from its calendar provider.");
+      }
       await deleteEvent(calendarId, eventId);
 
       await refetchEventsForWeek(visibleWeekStart);
@@ -279,8 +302,9 @@ export function App() {
       handleCloseModal();
     } catch (err) {
       console.error('Failed to delete event:', err);
+      throw err;
     }
-  }, [deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
+  }, [selectedEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
     try {
@@ -491,6 +515,7 @@ export function App() {
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
               onWeatherClick={() => setActiveView('weather')}
+              onEventClick={handleEventClick}
               members={members}
               layout={settings.dashboardLayout}
             />
