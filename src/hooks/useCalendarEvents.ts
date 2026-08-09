@@ -64,8 +64,15 @@ export function useCalendarEvents(connected: boolean) {
               ? ev.start.length === 10
               : !!ev.start.date && !ev.start.dateTime;
 
+            // Prefer a real provider uid. Some calendar integrations don't
+            // return one — in that case fall back to a synthetic composite
+            // id for React keys/UI purposes, but flag it as unstable so
+            // edit/delete against HA's calendar services (which require a
+            // real uid) can be blocked with a clear error instead of
+            // silently no-op'ing server-side.
+            const realUid = ev.uid || ev.recurrence_id;
             allEvents.push({
-              id: ev.uid || ev.recurrence_id || `${cal.id}-${allEvents.length}`,
+              id: realUid || `${cal.id}-${allEvents.length}`,
               title: ev.summary,
               start: startStr,
               end: endStr,
@@ -74,6 +81,7 @@ export function useCalendarEvents(connected: boolean) {
               calendarId: cal.id,
               calendarName: cal.name,
               color: getCalendarColor(colorIndex),
+              hasStableId: !!realUid,
             });
           }
         } catch (err) {
