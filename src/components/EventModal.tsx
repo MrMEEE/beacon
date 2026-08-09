@@ -5,6 +5,11 @@ import { CalendarEvent, CalendarInfo, RecurrenceFrequency } from '../types';
 interface EventModalProps {
   event: CalendarEvent | null;
   calendars: CalendarInfo[];
+  /** The user's configured default calendar (Settings > Calendar). Used as
+   *  the initial calendar selection for a NEW event; ignored when editing
+   *  an existing event (which keeps the event's own calendar). Falls back
+   *  to the first calendar in the list if unset/not a valid calendar id. */
+  defaultCalendarId?: string;
   onSave: (calendarId: string, data: EventFormData) => void;
   onDelete: (calendarId: string, eventId: string) => void;
   onClose: () => void;
@@ -50,6 +55,7 @@ function addHour(time: string): string {
 export function EventModal({
   event,
   calendars,
+  defaultCalendarId,
   onSave,
   onDelete,
   onClose,
@@ -57,7 +63,8 @@ export function EventModal({
   prefillTime,
 }: EventModalProps) {
   const isEditing = !!event;
-  const defaultCalendar = calendars[0]?.id || '';
+  const isValidDefault = !!defaultCalendarId && calendars.some((c) => c.id === defaultCalendarId);
+  const defaultCalendar = (isValidDefault ? defaultCalendarId : calendars[0]?.id) || '';
   const defaultDate = prefillDate || format(new Date(), 'yyyy-MM-dd');
   const defaultStartTime = prefillTime || '09:00';
   const defaultEndTime = addHour(defaultStartTime);

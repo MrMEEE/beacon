@@ -44,6 +44,22 @@ export function App() {
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
   const {
+    settings,
+    updateSettings,
+    resetSettings,
+    exportSettings,
+    importSettings,
+    clearLocalStorage,
+  } = useSettings();
+
+  const {
+    members,
+    addMember,
+    updateMember,
+    removeMember,
+  } = useFamily();
+
+  const {
     calendars: haCalendars,
     events: haEvents,
     fetchCalendars,
@@ -51,7 +67,10 @@ export function App() {
     createEvent: createHaEvent,
     updateEvent: updateHaEvent,
     deleteEvent: deleteHaEvent,
-  } = useCalendarEvents(connected);
+  } = useCalendarEvents(connected, {
+    calendarColors: settings.calendarColors,
+    members,
+  });
 
   const localCal = useLocalCalendar();
 
@@ -90,13 +109,6 @@ export function App() {
     }
   }, [localCal, deleteHaEvent]);
 
-  const {
-    members,
-    addMember,
-    updateMember,
-    removeMember,
-  } = useFamily();
-
   const { weather } = useWeather(client);
   const music = useMusic(client, connected);
   const {
@@ -107,15 +119,6 @@ export function App() {
   } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected);
-
-  const {
-    settings,
-    updateSettings,
-    resetSettings,
-    exportSettings,
-    importSettings,
-    clearLocalStorage,
-  } = useSettings();
 
   // Apply theme at App level so it stays active regardless of which view is shown
   const { setTheme } = useTheme();
@@ -619,6 +622,7 @@ export function App() {
         <EventModal
           event={selectedEvent}
           calendars={calendars}
+          defaultCalendarId={settings.defaultCalendar}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
           onClose={handleCloseModal}
