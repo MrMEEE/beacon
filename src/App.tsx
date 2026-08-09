@@ -627,6 +627,7 @@ export function App() {
                 onToggleChore={handleToggleChore}
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
+                members={members}
               />
             </div>
 

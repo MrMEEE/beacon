@@ -1608,7 +1608,7 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-about-row">
           <span className="settings-about-label">Version</span>
-          <span className="settings-about-value">1.0.0</span>
+          <span className="settings-about-value">{__APP_VERSION__}</span>
         </div>
         <div className="settings-about-row">
           <span className="settings-about-label">Home Assistant</span>

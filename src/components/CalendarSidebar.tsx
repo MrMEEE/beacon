@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO, isSameDay, startOfDay } from 'date-fns';
 import { CalendarEvent } from '../types';
-import { Chore } from '../types/family';
+import { Chore, FamilyMember } from '../types/family';
 import { TaskChecklist } from './TaskChecklist';
 import { DashboardTodoItem } from '../hooks/useDashboardTasks';
 
@@ -12,6 +12,7 @@ interface CalendarSidebarProps {
   onToggleChore: (choreId: string) => void;
   todoItems: DashboardTodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
+  members?: FamilyMember[];
 }
 
 export function CalendarSidebar({
@@ -21,6 +22,7 @@ export function CalendarSidebar({
   onToggleChore,
   todoItems,
   onToggleTodo,
+  members = [],
 }: CalendarSidebarProps) {
   const today = startOfDay(new Date());
 
@@ -85,6 +87,7 @@ export function CalendarSidebar({
             chores={chores}
             completedIds={completedChoreIds}
             onToggle={onToggleChore}
+            members={members}
           />
         ) : (
           <p className="cal-sidebar-empty">All clear</p>

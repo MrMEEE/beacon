@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Chore, FamilyMember } from '../types/family';
 
 interface ChoreCardProps {
@@ -7,6 +8,8 @@ interface ChoreCardProps {
   isCompleted: boolean;
   onComplete: () => void;
   onUncomplete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 function formatCents(cents: number): string {
@@ -20,10 +23,13 @@ export function ChoreCard({
   isCompleted,
   onComplete,
   onUncomplete,
+  onEdit,
+  onDelete,
 }: ChoreCardProps) {
   const [animating, setAnimating] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const [swiped, setSwiped] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleToggle = () => {
     if (isCompleted) {
@@ -51,6 +57,16 @@ export function ChoreCard({
     touchStartX.current = null;
   };
 
+  const handleDeleteClick = () => {
+    if (confirmDelete) {
+      onDelete?.();
+      setConfirmDelete(false);
+    } else {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+    }
+  };
+
   const value = formatCents(chore.value_cents);
 
   return (
@@ -75,6 +91,35 @@ export function ChoreCard({
         </span>
         {value && <span className="chore-card-value">{value}</span>}
       </div>
+
+      {(onEdit || onDelete) && (
+        <div className="chore-card-actions">
+          {onEdit && (
+            <button
+              type="button"
+              className="chore-card-action-btn"
+              onClick={onEdit}
+              aria-label={`Edit ${chore.name}`}
+            >
+              <Pencil size={15} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              className="chore-card-action-btn chore-card-action-btn--danger"
+              onClick={handleDeleteClick}
+              aria-label={`Delete ${chore.name}`}
+            >
+              {confirmDelete ? (
+                <span className="chore-card-action-confirm">Sure?</span>
+              ) : (
+                <Trash2 size={15} />
+              )}
+            </button>
+          )}
+        </div>
+      )}
 
       <button
         type="button"
