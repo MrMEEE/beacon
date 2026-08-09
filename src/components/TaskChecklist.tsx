@@ -1,14 +1,37 @@
 import { useState } from 'react';
-import { Chore } from '../types/family';
+import { Chore, FamilyMember } from '../types/family';
 import { hapticMedium, hapticSuccess } from '../hooks/useHaptics';
 
 interface TaskChecklistProps {
   chores: Chore[];
   completedIds: Set<string>;
   onToggle: (choreId: string) => void;
+  members?: FamilyMember[];
 }
 
-export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistProps) {
+function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMember[] }) {
+  if (!members.length || !chore.assigned_to?.length) return null;
+  const assignees = chore.assigned_to
+    .map((id) => members.find((m) => m.id === id))
+    .filter((m): m is FamilyMember => Boolean(m));
+  if (assignees.length === 0) return null;
+  return (
+    <span className="task-checklist-assignees">
+      {assignees.map((m) => (
+        <span
+          key={m.id}
+          className="task-checklist-avatar"
+          style={{ backgroundColor: m.color + '22', borderColor: m.color }}
+          title={m.name}
+        >
+          {m.avatar}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: TaskChecklistProps) {
   const [animatingId, setAnimatingId] = useState<string | null>(null);
 
   const handleToggle = (choreId: string) => {
@@ -57,6 +80,7 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
             {chore.name}
           </span>
+          <AssigneeBadges chore={chore} members={members} />
         </li>
       ))}
       {completed.map((chore) => (
@@ -77,6 +101,7 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
             {chore.name}
           </span>
+          <AssigneeBadges chore={chore} members={members} />
         </li>
       ))}
     </ul>
