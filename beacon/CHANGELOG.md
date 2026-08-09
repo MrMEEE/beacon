@@ -1,3 +1,12 @@
+## [1.32.6](https://github.com/asachs01/beacon/compare/v1.32.5...v1.32.6) (2026-08-09)
+
+
+### Bug Fixes
+
+* add chore edit/delete UI, assignee visibility, and dynamic version ([103ad44](https://github.com/asachs01/beacon/commit/103ad4438749aedec825226b3fba55b1f403717b)), closes [#1](https://github.com/asachs01/beacon/issues/1)
+* resolve calendar default/colors and add multi-calendar family linking ([9836159](https://github.com/asachs01/beacon/commit/98361594663869fdf9682b583137d1efd0ab91a5)), closes [#1](https://github.com/asachs01/beacon/issues/1)
+* resolve calendar event CRUD bugs (edit duplicates, end-time drift, dead deletes, dashboard edit) ([542812a](https://github.com/asachs01/beacon/commit/542812a4c549f3769812cb3bcc5164e3d561154a)), closes [#1](https://github.com/asachs01/beacon/issues/1)
+
 ## [1.32.5](https://github.com/asachs01/beacon/compare/v1.32.4...v1.32.5) (2026-08-03)
 
 
