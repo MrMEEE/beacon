@@ -1,3 +1,10 @@
+## [1.32.7](https://github.com/asachs01/beacon/compare/v1.32.6...v1.32.7) (2026-08-10)
+
+
+### Bug Fixes
+
+* restore calendar event update/delete after HA moved them to WS-only commands ([69bbedb](https://github.com/asachs01/beacon/commit/69bbedba31bb28d2ecd56f039751ab0e4413ed3d))
+
 ## [1.32.6](https://github.com/asachs01/beacon/compare/v1.32.5...v1.32.6) (2026-08-09)
 
 
