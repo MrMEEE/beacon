@@ -1,6 +1,27 @@
 import { useState, useCallback, useRef } from 'react';
 import { CalendarEvent, CalendarInfo, CalendarColorMember, resolveCalendarColor } from '../types';
-import { haFetch, hasToken } from '../api/ha-rest';
+import { haFetch, hasToken, callBeaconAction, BeaconActionError } from '../api/ha-rest';
+import { HomeAssistantClient, toWsEventPayload } from '../api/homeassistant';
+
+/**
+ * Re-thrown by updateEvent/deleteEvent when HA reports the calendar
+ * doesn't support that operation (CalendarEntityFeature.UPDATE_EVENT /
+ * DELETE_EVENT unset — common for many read-only or limited providers).
+ * Callers can catch this specifically to offer a fallback (e.g. delete +
+ * recreate for updates) instead of showing a raw error.
+ */
+export class CalendarNotSupportedError extends Error {
+  constructor(op: 'update' | 'delete') {
+    super(`This calendar does not support event ${op === 'update' ? 'editing' : 'deletion'}.`);
+    this.name = 'CalendarNotSupportedError';
+  }
+}
+
+function isNotSupported(err: unknown): boolean {
+  if (err instanceof BeaconActionError) return err.code === 'not_supported';
+  if (err && typeof err === 'object' && 'code' in err) return (err as { code?: string }).code === 'not_supported';
+  return false;
+}
 
 /**
  * Calendar events hook — uses HA REST API via haFetch.
@@ -18,6 +39,7 @@ export function useCalendarEvents(
     calendarColors?: Record<string, string>;
     members?: CalendarColorMember[];
   },
+  getClient?: () => HomeAssistantClient | null,
 ) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -126,6 +148,24 @@ export function useCalendarEvents(
     });
   }, []);
 
+  /**
+   * Update an existing event. HA moved this off the `calendar.update_event`
+   * REST service to a WS-only command in current core (see
+   * homeassistant/components/calendar/__init__.py) — POSTing to
+   * /api/services/calendar/update_event now 400s because the service no
+   * longer exists. When a live HomeAssistantClient is available
+   * (standalone mode, direct browser WS connection), this calls its
+   * updateEvent method directly. Otherwise (add-on/proxy mode, no
+   * browser-side token) it routes through the add-on server's
+   * /beacon-action/calendar-event bridge, which opens the WS connection
+   * server-side using SUPERVISOR_TOKEN.
+   *
+   * Many calendar providers don't support event updates at all
+   * (CalendarEntityFeature.UPDATE_EVENT unset) — HA reports that as error
+   * code "not_supported", which is normalized here into
+   * CalendarNotSupportedError so callers can detect it and offer a
+   * delete+recreate fallback instead of showing a raw error.
+   */
   const updateEvent = useCallback(async (
     calendarId: string,
     uid: string,
@@ -138,18 +178,45 @@ export function useCalendarEvents(
       description?: string;
     }
   ) => {
-    await haFetch(`/api/services/calendar/update_event`, {
-      method: 'POST',
-      body: JSON.stringify({ ...event, entity_id: calendarId, uid }),
-    });
-  }, []);
+    try {
+      const client = getClient?.();
+      if (client?.isConnected) {
+        await client.updateEvent(calendarId, uid, event);
+      } else {
+        await callBeaconAction('/beacon-action/calendar-event', {
+          op: 'update',
+          entity_id: calendarId,
+          uid,
+          event: toWsEventPayload(event),
+        });
+      }
+    } catch (err) {
+      if (isNotSupported(err)) throw new CalendarNotSupportedError('update');
+      throw err;
+    }
+  }, [getClient]);
 
+  /**
+   * Delete an event. Same WS-only migration and not-supported handling as
+   * updateEvent above — see that doc comment for the full explanation.
+   */
   const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
-    await haFetch(`/api/services/calendar/delete_event`, {
-      method: 'POST',
-      body: JSON.stringify({ entity_id: calendarId, uid }),
-    });
-  }, []);
+    try {
+      const client = getClient?.();
+      if (client?.isConnected) {
+        await client.deleteEvent(calendarId, uid);
+      } else {
+        await callBeaconAction('/beacon-action/calendar-event', {
+          op: 'delete',
+          entity_id: calendarId,
+          uid,
+        });
+      }
+    } catch (err) {
+      if (isNotSupported(err)) throw new CalendarNotSupportedError('delete');
+      throw err;
+    }
+  }, [getClient]);
 
   return {
     calendars,

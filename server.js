@@ -11,11 +11,13 @@ const http = require('http');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const WebSocket = require('ws');
 
 const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
 const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
-const HA_API_BASE = 'http://supervisor/core';
+const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core';
+const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/websocket';
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 
@@ -153,6 +155,131 @@ function handleServiceCall(req, res) {
     } catch (err) {
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
+    }
+  }).catch((err) => {
+    if (!res.headersSent) {
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  });
+}
+
+/**
+ * Send one command over HA's WebSocket API and resolve with its result.
+ * Used for calendar event update/delete, which HA moved off the REST
+ * services API to WS-only commands (calendar/event/update, /delete) —
+ * see homeassistant/components/calendar/__init__.py. Opens a short-lived
+ * connection per call rather than keeping one open; call volume here is
+ * low (user-triggered edits/deletes), so the extra connect/auth round
+ * trip is an acceptable tradeoff for not having to manage a persistent
+ * connection's lifecycle across container restarts.
+ */
+function haWsCommand(command, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    if (!SUPERVISOR_TOKEN) {
+      reject(new Error('No Supervisor token available'));
+      return;
+    }
+
+    const ws = new WebSocket(HA_WS_URL);
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      ws.terminate();
+      reject(new Error('Home Assistant WebSocket command timed out'));
+    }, timeoutMs);
+
+    function finish(fn, arg) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { ws.close(); } catch { /* ignore */ }
+      fn(arg);
+    }
+
+    ws.on('message', (raw) => {
+      let msg;
+      try { msg = JSON.parse(raw.toString('utf8')); } catch { return; }
+
+      if (msg.type === 'auth_required') {
+        ws.send(JSON.stringify({ type: 'auth', access_token: SUPERVISOR_TOKEN }));
+        return;
+      }
+      if (msg.type === 'auth_invalid') {
+        finish(reject, new Error('Home Assistant WebSocket auth failed'));
+        return;
+      }
+      if (msg.type === 'auth_ok') {
+        ws.send(JSON.stringify({ id: 1, ...command }));
+        return;
+      }
+      if (msg.type === 'result' && msg.id === 1) {
+        if (msg.success) {
+          finish(resolve, msg.result);
+        } else {
+          finish(reject, Object.assign(new Error(msg.error?.message || 'Home Assistant command failed'), {
+            code: msg.error?.code,
+          }));
+        }
+      }
+    });
+
+    ws.on('error', (err) => finish(reject, err));
+    ws.on('close', () => {
+      if (!settled) finish(reject, new Error('Home Assistant WebSocket closed unexpectedly'));
+    });
+  });
+}
+
+/**
+ * POST /beacon-action/calendar-event
+ * Body: { op: 'update'|'delete', entity_id, uid, event? }
+ * Bridges calendar event update/delete to HA's WS-only commands
+ * (calendar/event/update, calendar/event/delete) since those are no
+ * longer exposed as REST-callable services in current HA core.
+ */
+function handleCalendarEventAction(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
+  collectBody(req).then(async (bodyBuf) => {
+    try {
+      const { op, entity_id, uid, event } = JSON.parse((bodyBuf || '{}').toString('utf8'));
+      if (!op || !entity_id || !uid) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing op, entity_id, or uid' }));
+        return;
+      }
+      if (op !== 'update' && op !== 'delete') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'op must be "update" or "delete"' }));
+        return;
+      }
+      if (op === 'update' && (!event || typeof event !== 'object')) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing event payload for update' }));
+        return;
+      }
+
+      const command = op === 'update'
+        ? { type: 'calendar/event/update', entity_id, uid, event }
+        : { type: 'calendar/event/delete', entity_id, uid };
+
+      const result = await haWsCommand(command);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, result }));
+    } catch (err) {
+      // HA's ERR_NOT_SUPPORTED (calendar lacks update/delete support) is a
+      // distinct, expected case — surface it as 501 with the code intact
+      // so the UI can show "this calendar doesn't support X" instead of a
+      // generic error.
+      const status = err.code === 'not_supported' ? 501 : 502;
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message, code: err.code || null }));
     }
   }).catch((err) => {
     if (!res.headersSent) {
@@ -572,6 +699,12 @@ const server = http.createServer((req, res) => {
   // Service call API (avoids ingress POST issues)
   if (req.url === '/beacon-action/service') {
     handleServiceCall(req, res);
+    return;
+  }
+
+  // Calendar event update/delete (WS-only commands in current HA core)
+  if (req.url === '/beacon-action/calendar-event') {
+    handleCalendarEventAction(req, res);
     return;
   }
 

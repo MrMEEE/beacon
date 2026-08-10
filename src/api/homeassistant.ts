@@ -2,6 +2,31 @@ import { CalendarEvent, CalendarInfo, WeatherData, CalendarColorMember, resolveC
 
 type MessageHandler = (message: HAMessage) => void;
 
+/**
+ * Convert the app's REST-shaped event fields (start_date_time, end_date_time,
+ * start_date, end_date, summary, description) into the shape HA's WS-only
+ * calendar/event/update command expects (dtstart, dtend, summary,
+ * description — see homeassistant/components/calendar/const.py EVENT_START
+ * = "dtstart", EVENT_END = "dtend"). Only forwards fields that are present.
+ */
+export function toWsEventPayload(event: {
+  summary?: string;
+  start_date_time?: string;
+  end_date_time?: string;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+}): Record<string, string> {
+  const payload: Record<string, string> = {};
+  if (event.summary !== undefined) payload.summary = event.summary;
+  if (event.description !== undefined) payload.description = event.description;
+  const dtstart = event.start_date_time ?? event.start_date;
+  const dtend = event.end_date_time ?? event.end_date;
+  if (dtstart !== undefined) payload.dtstart = dtstart;
+  if (dtend !== undefined) payload.dtend = dtend;
+  return payload;
+}
+
 interface HAMessage {
   id?: number;
   type: string;
@@ -13,6 +38,7 @@ interface HAResultMessage {
   type: 'result';
   success: boolean;
   result: unknown;
+  error?: { code: string; message: string };
 }
 
 interface HAEventMessage {
@@ -95,7 +121,11 @@ export class HomeAssistantClient {
             if (result.success) {
               pending.resolve(result.result);
             } else {
-              pending.reject(result.result);
+              const err = Object.assign(
+                new Error(result.error?.message || 'Home Assistant command failed'),
+                { code: result.error?.code },
+              );
+              pending.reject(err);
             }
           }
         }
@@ -218,6 +248,16 @@ export class HomeAssistantClient {
     });
   }
 
+  /**
+   * Update an existing event. HA moved this off the `calendar.update_event`
+   * REST service to a WS-only command (`calendar/event/update`) with a
+   * different field schema (dtstart/dtend/summary, not start_date_time/
+   * end_date_time) — see homeassistant/components/calendar/__init__.py.
+   * Calendars that don't support CalendarEntityFeature.UPDATE_EVENT (many
+   * providers don't) reject this with error code "not_supported"; callers
+   * should catch that and fall back to delete+recreate or show a clear
+   * "this calendar doesn't support editing" message.
+   */
   async updateEvent(calendarId: string, uid: string, event: {
     summary?: string;
     start_date_time?: string;
@@ -227,21 +267,23 @@ export class HomeAssistantClient {
     description?: string;
   }): Promise<void> {
     await this.sendMessage({
-      type: 'call_service',
-      domain: 'calendar',
-      service: 'update_event',
-      target: { entity_id: calendarId },
-      service_data: { uid, ...event },
+      type: 'calendar/event/update',
+      entity_id: calendarId,
+      uid,
+      event: toWsEventPayload(event),
     });
   }
 
+  /**
+   * Delete an event. HA moved this off `calendar.delete_event` (REST
+   * service) to the WS-only `calendar/event/delete` command — see note on
+   * updateEvent above.
+   */
   async deleteEvent(calendarId: string, uid: string): Promise<void> {
     await this.sendMessage({
-      type: 'call_service',
-      domain: 'calendar',
-      service: 'delete_event',
-      target: { entity_id: calendarId },
-      service_data: { uid },
+      type: 'calendar/event/delete',
+      entity_id: calendarId,
+      uid,
     });
   }
 

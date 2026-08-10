@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { startOfWeek, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
-import { useCalendarEvents } from './hooks/useCalendarEvents';
+import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
@@ -70,7 +70,7 @@ export function App() {
   } = useCalendarEvents(connected, {
     calendarColors: settings.calendarColors,
     members,
-  });
+  }, client);
 
   const localCal = useLocalCalendar();
 
@@ -276,7 +276,21 @@ export function App() {
           await deleteEvent(selectedEvent.calendarId, selectedEvent.id);
           await createEvent(calendarId, eventData);
         } else {
-          await updateEvent(calendarId, selectedEvent.id, eventData);
+          try {
+            await updateEvent(calendarId, selectedEvent.id, eventData);
+          } catch (err) {
+            // Many calendar providers (Google Calendar via HA, several
+            // CalDAV backends, etc.) don't support in-place event updates
+            // at all. Fall back to delete + recreate so editing still
+            // works — the event gets a new id, but that's invisible to
+            // the user since we refetch right after.
+            if (err instanceof CalendarNotSupportedError) {
+              await deleteEvent(calendarId, selectedEvent.id);
+              await createEvent(calendarId, eventData);
+            } else {
+              throw err;
+            }
+          }
         }
       } else {
         await createEvent(calendarId, eventData);
@@ -305,7 +319,9 @@ export function App() {
       handleCloseModal();
     } catch (err) {
       console.error('Failed to delete event:', err);
-      throw err;
+      throw err instanceof CalendarNotSupportedError
+        ? new Error('This calendar does not support deleting events.')
+        : err;
     }
   }, [selectedEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
 
@@ -315,29 +331,37 @@ export function App() {
       const oldEnd = new Date(event.end);
       const durationMs = oldEnd.getTime() - oldStart.getTime();
 
-      if (event.allDay) {
-        // For all-day events, move to the new date
-        const newEndDate = new Date(new Date(newDate).getTime() + durationMs);
-        await updateEvent(event.calendarId, event.id, {
-          start_date: newDate,
-          end_date: format(newEndDate, 'yyyy-MM-dd'),
-        });
-      } else {
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const newStartDt = `${newDate}T${pad(newHour)}:00:00`;
-        const newEndTime = new Date(new Date(newStartDt).getTime() + durationMs);
-        const newEndDt = `${format(newEndTime, 'yyyy-MM-dd')}T${pad(newEndTime.getHours())}:${pad(newEndTime.getMinutes())}:00`;
-        await updateEvent(event.calendarId, event.id, {
-          start_date_time: newStartDt,
-          end_date_time: newEndDt,
-        });
+      const patch = event.allDay
+        ? {
+            start_date: newDate,
+            end_date: format(new Date(new Date(newDate).getTime() + durationMs), 'yyyy-MM-dd'),
+          }
+        : (() => {
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const newStartDt = `${newDate}T${pad(newHour)}:00:00`;
+            const newEndTime = new Date(new Date(newStartDt).getTime() + durationMs);
+            const newEndDt = `${format(newEndTime, 'yyyy-MM-dd')}T${pad(newEndTime.getHours())}:${pad(newEndTime.getMinutes())}:00`;
+            return { start_date_time: newStartDt, end_date_time: newEndDt };
+          })();
+
+      try {
+        await updateEvent(event.calendarId, event.id, patch);
+      } catch (err) {
+        // Same fallback as handleSaveEvent: calendars without update
+        // support need delete + recreate to move an event via drag.
+        if (err instanceof CalendarNotSupportedError) {
+          await deleteEvent(event.calendarId, event.id);
+          await createEvent(event.calendarId, { ...patch, summary: event.title, description: event.description });
+        } else {
+          throw err;
+        }
       }
 
       await refetchEventsForWeek(visibleWeekStart);
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, refetchEventsForWeek, visibleWeekStart]);
+  }, [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, visibleWeekStart]);
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
