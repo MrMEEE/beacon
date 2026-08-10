@@ -17,6 +17,7 @@ RUN apk add --no-cache nodejs
 WORKDIR /app
 
 COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/node_modules/ws /app/node_modules/ws
 COPY run.sh /app/run.sh
 COPY server.js /app/server.js
 COPY custom_sentences/ /app/custom_sentences/
