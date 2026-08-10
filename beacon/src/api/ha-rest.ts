@@ -132,3 +132,57 @@ export async function getEntityState(entityId: string): Promise<{
 export function hasToken(): boolean {
   return isAddOn() || !!getHaToken();
 }
+
+/**
+ * Error thrown by callBeaconAction when the add-on server bridge (or HA
+ * itself, relayed through it) rejects the request. Carries the HA error
+ * `code` when available (e.g. "not_supported" for calendars that don't
+ * support event update/delete) so callers can branch on it instead of
+ * pattern-matching the message string.
+ */
+export class BeaconActionError extends Error {
+  code: string | null;
+  status: number;
+  constructor(message: string, code: string | null, status: number) {
+    super(message);
+    this.name = 'BeaconActionError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
+/**
+ * POST to one of the add-on server's /beacon-action/* endpoints and return
+ * the parsed JSON body — including on error responses, since those bridge
+ * endpoints return `{ error, code }` bodies that callers need to inspect
+ * (e.g. to detect HA's "not_supported" for calendars lacking event
+ * update/delete). Only used in add-on/proxy mode; standalone mode talks to
+ * HA directly over WebSocket via HomeAssistantClient instead.
+ */
+export async function callBeaconAction(path: string, body: Record<string, unknown>): Promise<unknown> {
+  const base = getBaseUrl();
+  const token = getHaToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token && !isAddOn()) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${base}${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' && 'error' in data)
+      ? String((data as { error: unknown }).error)
+      : `Beacon action ${path} failed: ${res.status}`;
+    const code = (data && typeof data === 'object' && 'code' in data)
+      ? (data as { code: string | null }).code
+      : null;
+    throw new BeaconActionError(message, code, res.status);
+  }
+
+  return data;
+}
