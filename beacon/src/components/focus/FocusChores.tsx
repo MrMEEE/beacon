@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Chore } from '../../types/family';
+import { formatChoreValue } from '../../types/family';
 import { hapticMedium, hapticSuccess } from '../../hooks/useHaptics';
 
 interface FocusChoresProps {
@@ -58,8 +59,7 @@ export function FocusChores({ chores, completedIds, currencySymbol, onToggle }: 
                 </span>
                 {chore.value_cents > 0 && (
                   <span className="focus-check-value">
-                    {currencySymbol}
-                    {(chore.value_cents / 100).toFixed(2)}
+                    {formatChoreValue(chore.value_cents, currencySymbol)}
                   </span>
                 )}
               </button>

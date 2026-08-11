@@ -65,6 +65,23 @@ export interface MemberEarnings {
   chore_count: number;
 }
 
+/** Non-monetary "star" unit, selectable alongside currency symbols in
+ *  Settings → Chores → Rewards for families that prefer points over money. */
+export const STAR_CURRENCY = '\u2b50';
+
+/** Format a chore's value_cents for display, honoring the star-currency
+ *  option. In star mode the underlying value_cents is still the storage
+ *  unit (so existing chore data / math is unchanged) but it's presented as
+ *  a whole-number star count rather than a monetary amount with decimals. */
+export function formatChoreValue(cents: number, currencySymbol: string): string {
+  if (cents === 0) return '';
+  if (currencySymbol === STAR_CURRENCY) {
+    const stars = Math.round(cents / 100);
+    return `${stars} ${STAR_CURRENCY}`;
+  }
+  return `${currencySymbol}${(cents / 100).toFixed(2)}`;
+}
+
 /** Color palette for family member assignment */
 export const MEMBER_COLORS = [
   '#3b82f6', // blue

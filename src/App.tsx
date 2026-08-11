@@ -126,7 +126,18 @@ export function App() {
     setTheme(settings.themeId);
   }, [settings.themeId, setTheme]);
 
-  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
+  // Calendar-view visibility state. Seeded from the Settings-level
+  // permanentlyHiddenCalendars list (source of truth) so calendars disabled
+  // in Settings → Calendar are hidden here too, and kept in sync whenever
+  // that setting changes (e.g. edited in another tab/session) rather than
+  // only on first mount.
+  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(
+    () => new Set(settings.permanentlyHiddenCalendars),
+  );
+
+  useEffect(() => {
+    setHiddenCalendars(new Set(settings.permanentlyHiddenCalendars));
+  }, [settings.permanentlyHiddenCalendars]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
@@ -214,9 +225,13 @@ export function App() {
       } else {
         next.add(calendarId);
       }
+      // Persist to Settings so the Calendar-view selection survives
+      // navigation/remount and reload — settings.permanentlyHiddenCalendars
+      // is the single source of truth for calendar visibility.
+      updateSettings({ permanentlyHiddenCalendars: Array.from(next) });
       return next;
     });
-  }, []);
+  }, [updateSettings]);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -244,7 +259,14 @@ export function App() {
       ? {
           summary: data.summary,
           start_date: data.startDate,
-          end_date: data.endDate,
+          // HA's calendar API treats dtend as exclusive (the day AFTER the
+          // last day of the event) and rejects dtstart === dtend with a
+          // "minimum event duration" error. When the user picks the same
+          // start/end date for a single-day all-day event, bump end_date to
+          // the day after start_date so HA sees a valid >=1-day duration.
+          end_date: data.endDate <= data.startDate
+            ? format(addDays(new Date(`${data.startDate}T00:00:00`), 1), 'yyyy-MM-dd')
+            : data.endDate,
           description: data.description || undefined,
         }
       : {
@@ -536,7 +558,7 @@ export function App() {
             <DashboardView
               events={events}
               weather={weather}
-              chores={chores}
+              chores={settings.choresEnabled ? chores : []}
               completedChoreIds={completedChoreIds}
               onToggleChore={handleToggleChore}
               todoItems={dashboardTasks.items}
@@ -646,7 +668,7 @@ export function App() {
               </div>
               <CalendarSidebar
                 events={events}
-                chores={chores}
+                chores={settings.choresEnabled ? chores : []}
                 completedChoreIds={completedChoreIds}
                 onToggleChore={handleToggleChore}
                 todoItems={dashboardTasks.items}

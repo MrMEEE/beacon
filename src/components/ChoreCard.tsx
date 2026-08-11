@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
-import { Chore, FamilyMember } from '../types/family';
+import { Chore, FamilyMember, formatChoreValue } from '../types/family';
 
 interface ChoreCardProps {
   chore: Chore;
@@ -10,11 +10,11 @@ interface ChoreCardProps {
   onUncomplete: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  currencySymbol?: string;
 }
 
-function formatCents(cents: number): string {
-  if (cents === 0) return '';
-  return `$${(cents / 100).toFixed(2)}`;
+function formatCents(cents: number, currencySymbol: string): string {
+  return formatChoreValue(cents, currencySymbol);
 }
 
 export function ChoreCard({
@@ -25,6 +25,7 @@ export function ChoreCard({
   onUncomplete,
   onEdit,
   onDelete,
+  currencySymbol = '$',
 }: ChoreCardProps) {
   const [animating, setAnimating] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -67,7 +68,7 @@ export function ChoreCard({
     }
   };
 
-  const value = formatCents(chore.value_cents);
+  const value = formatCents(chore.value_cents, currencySymbol);
 
   return (
     <div

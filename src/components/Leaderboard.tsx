@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
-import { MemberEarnings } from '../types/family';
+import { useSettings } from '../hooks/useSettings';
+import { MemberEarnings, formatChoreValue } from '../types/family';
 import { localDayKey } from '../api/date-keys';
 
 interface LeaderboardProps {
@@ -30,14 +31,11 @@ function getMonthRange(): [string, string] {
   return [localDayKey(start), localDayKey(end)];
 }
 
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 const RANK_DECORATIONS = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
 
 export function Leaderboard({ open, onClose }: LeaderboardProps) {
   const { members } = useFamily();
+  const { settings } = useSettings();
   const { getEarningsForPeriod, getStreakForMember } = useChores();
   const [period, setPeriod] = useState<Period>('week');
   const [earnings, setEarnings] = useState<MemberEarnings[]>([]);
@@ -115,7 +113,7 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
                 </span>
               </div>
               <StreakBadge streak={entry.streak} size="sm" />
-              <span className="lb-earnings">{formatCents(entry.earnings.total_cents)}</span>
+              <span className="lb-earnings">{formatChoreValue(entry.earnings.total_cents, settings.currencySymbol)}</span>
             </div>
           ))}
         </div>

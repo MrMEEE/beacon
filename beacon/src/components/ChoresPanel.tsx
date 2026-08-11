@@ -4,6 +4,8 @@ import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
+import { useSettings } from '../hooks/useSettings';
+import { STAR_CURRENCY } from '../types/family';
 
 interface ChoresPanelProps {
   open: boolean;
@@ -22,6 +24,7 @@ const EMPTY_CHORE_FORM = {
 
 export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   const { members } = useFamily();
+  const { settings } = useSettings();
   const {
     addChore,
     updateChore,
@@ -174,6 +177,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     onUncomplete={() => uncompleteChore(chore.id, member.id)}
                     onEdit={() => handleStartEdit(chore)}
                     onDelete={() => handleDeleteChore(chore.id)}
+                    currencySymbol={settings.currencySymbol}
                   />
                 ))}
               </div>
@@ -228,18 +232,27 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                 <div className="form-field">
                   <label className="form-label">Value</label>
                   <div className="chores-value-input">
-                    <span className="chores-value-prefix">$</span>
+                    <span className="chores-value-prefix">
+                      {settings.currencySymbol === STAR_CURRENCY ? STAR_CURRENCY : '$'}
+                    </span>
                     <input
                       type="number"
                       className="form-input"
-                      value={(newChore.value_cents / 100).toFixed(2)}
+                      value={
+                        settings.currencySymbol === STAR_CURRENCY
+                          ? Math.round(newChore.value_cents / 100).toString()
+                          : (newChore.value_cents / 100).toFixed(2)
+                      }
                       onChange={(e) =>
                         setNewChore((f) => ({
                           ...f,
-                          value_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                          value_cents:
+                            settings.currencySymbol === STAR_CURRENCY
+                              ? Math.round(parseFloat(e.target.value || '0')) * 100
+                              : Math.round(parseFloat(e.target.value || '0') * 100),
                         }))
                       }
-                      step="0.25"
+                      step={settings.currencySymbol === STAR_CURRENCY ? '1' : '0.25'}
                       min="0"
                     />
                   </div>

@@ -1578,6 +1578,7 @@ export function SettingsView({
                   { value: '$', label: '$' },
                   { value: '\u20ac', label: '\u20ac' },
                   { value: '\u00a3', label: '\u00a3' },
+                  { value: '\u2b50', label: '\u2b50' },
                 ]}
                 onChange={(v) => onUpdateSettings({ currencySymbol: v })}
               />

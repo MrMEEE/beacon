@@ -20,11 +20,15 @@ function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMembe
       {assignees.map((m) => (
         <span
           key={m.id}
-          className="task-checklist-avatar"
+          className="task-checklist-assignee"
           style={{ backgroundColor: m.color + '22', borderColor: m.color }}
-          title={m.name}
         >
-          {m.avatar}
+          <span className="task-checklist-avatar" aria-hidden="true">
+            {m.avatar}
+          </span>
+          <span className="task-checklist-assignee-name" style={{ color: m.color }}>
+            {m.name}
+          </span>
         </span>
       ))}
     </span>
