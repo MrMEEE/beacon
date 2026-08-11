@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/asachs01/beacon/compare/v1.32.8...v1.33.0) (2026-08-11)
+
+
+### Features
+
+* dedicated full-screen Chores view with per-member columns ([29de05a](https://github.com/asachs01/beacon/commit/29de05a382a7aa43b1bf30a0afa44dd7ca3240f3))
+
 ## [1.32.8](https://github.com/asachs01/beacon/compare/v1.32.7...v1.32.8) (2026-08-11)
 
 
