@@ -12,7 +12,7 @@ import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
 import { useSettings } from './hooks/useSettings';
-import { ChoresPanel } from './components/ChoresPanel';
+import { ChoresView } from './components/ChoresView';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
 import { MusicView } from './components/MusicView';
@@ -194,8 +194,8 @@ export function App() {
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client, !focusMemberId);
 
-  // Chores and leaderboard are slide-over panels (not full views)
-  const [showChoresPanel, setShowChoresPanel] = useState(false);
+  // Leaderboard is still a slide-over panel (not a full view); Chores is now
+  // a real full-screen activeView (see PRD: dedicated chores screen).
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Fetch data when connected, or when the user navigates to a different week.
@@ -394,19 +394,13 @@ export function App() {
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
-      // Chores and leaderboard open as overlays, don't change the main view
-      if (view === 'chores') {
-        setShowChoresPanel(true);
-        setShowLeaderboard(false);
-        return;
-      }
+      // Leaderboard opens as an overlay, doesn't change the main view.
+      // Chores is a real activeView now (dedicated full-screen view).
       if (view === 'leaderboard') {
         setShowLeaderboard(true);
-        setShowChoresPanel(false);
         return;
       }
-      // All other views: close any open panels and switch view
-      setShowChoresPanel(false);
+      // All other views: close any open panel and switch view
       setShowLeaderboard(false);
       setActiveView(view);
     },
@@ -414,7 +408,6 @@ export function App() {
   );
 
   const handleClosePanel = useCallback(() => {
-    setShowChoresPanel(false);
     setShowLeaderboard(false);
   }, []);
 
@@ -576,6 +569,14 @@ export function App() {
               sidebarPosition={sidebarPos}
             />
           </>
+        ) : activeView === 'chores' ? (
+          settings.choresEnabled ? (
+            <ChoresView />
+          ) : (
+            <div className="chores-empty" style={{ padding: 48 }}>
+              Chores are disabled. Enable them in Settings → Chores to use this screen.
+            </div>
+          )
         ) : activeView === 'music' ? (
           <MusicView
             activePlayer={music.activePlayer}
@@ -700,18 +701,6 @@ export function App() {
           onClose={handleCloseModal}
           prefillDate={prefillDate}
           prefillTime={prefillTime}
-        />
-      )}
-
-      {/* Chores Slide Panel */}
-      <ChoresPanel
-        open={showChoresPanel}
-        onClose={handleClosePanel}
-      />
-      {showChoresPanel && (
-        <div
-          className="slide-panel-backdrop"
-          onClick={handleClosePanel}
         />
       )}
 

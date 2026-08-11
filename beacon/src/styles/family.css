@@ -919,3 +919,101 @@
     font-size: 1rem;
   }
 }
+
+/* --- Dedicated Chores screen --- */
+.chores-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 24px 32px;
+  overflow: hidden;
+}
+
+.chores-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.chores-view-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.chores-view-header .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chores-family-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--member-count, 1), minmax(200px, 1fr));
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+}
+
+.chores-member-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-card, var(--bg-page));
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.chores-member-col-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.chores-member-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--border);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+  flex-shrink: 0;
+}
+
+.chores-member-add-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .chores-view {
+    padding: 16px;
+  }
+
+  .chores-family-grid {
+    grid-template-columns: 1fr;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  .chores-member-col {
+    min-height: 200px;
+  }
+}
