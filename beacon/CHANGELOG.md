@@ -1,3 +1,10 @@
+## [1.32.8](https://github.com/asachs01/beacon/compare/v1.32.7...v1.32.8) (2026-08-11)
+
+
+### Bug Fixes
+
+* all-day event dtend, calendar visibility persistence, chores toggle, assignee display ([2fe7cc3](https://github.com/asachs01/beacon/commit/2fe7cc3cce58cc72c748dcc38d0b4707e9fd7dd1))
+
 ## [1.32.7](https://github.com/asachs01/beacon/compare/v1.32.6...v1.32.7) (2026-08-10)
 
 
