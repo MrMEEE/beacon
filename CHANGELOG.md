@@ -1,3 +1,10 @@
+## [1.33.1](https://github.com/asachs01/beacon/compare/v1.33.0...v1.33.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* chore assignee badges overlapping text on Calendar screen ([9c777f2](https://github.com/asachs01/beacon/commit/9c777f2308df9caae46ff6591e7dd23ef42f700e))
+
 # [1.33.0](https://github.com/asachs01/beacon/compare/v1.32.8...v1.33.0) (2026-08-11)
 
 
