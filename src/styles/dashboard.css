@@ -505,6 +505,13 @@
   min-width: 0;
 }
 
+.task-checklist-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .task-checklist-label--done {
   text-decoration: line-through;
   color: var(--text-muted);

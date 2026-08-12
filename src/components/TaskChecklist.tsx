@@ -82,7 +82,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
           </button>
           <span className="task-checklist-label">
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
-            {chore.name}
+            <span className="task-checklist-name" title={chore.name}>{chore.name}</span>
           </span>
           <AssigneeBadges chore={chore} members={members} />
         </li>
@@ -103,7 +103,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
           </button>
           <span className="task-checklist-label task-checklist-label--done">
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
-            {chore.name}
+            <span className="task-checklist-name" title={chore.name}>{chore.name}</span>
           </span>
           <AssigneeBadges chore={chore} members={members} />
         </li>
