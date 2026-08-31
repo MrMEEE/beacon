@@ -5,6 +5,9 @@ import { AgendaTodayCard } from './AgendaTodayCard';
 import { AgendaWeekCard } from './AgendaWeekCard';
 import { MenuCard } from './MenuCard';
 import { TasksCard } from './TasksCard';
+import { HaEntityCard } from './HaEntityCard';
+import { HaEntitiesListCard } from './HaEntitiesListCard';
+import { HaToggleCard } from './HaToggleCard';
 
 export const cardRegistry: Record<string, CardDefinition> = {
   'clock-weather': {
@@ -14,6 +17,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: ClockWeatherCard,
     defaultConfig: {},
     defaultSize: 'lg',
+    allowedRegions: ['topbar'],
   },
   'family-calendar': {
     type: 'family-calendar',
@@ -22,6 +26,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: FamilyCalendarCard,
     defaultConfig: {},
     defaultSize: 'lg',
+    allowedRegions: ['main'],
   },
   'agenda-today': {
     type: 'agenda-today',
@@ -30,6 +35,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: AgendaTodayCard,
     defaultConfig: {},
     defaultSize: 'md',
+    allowedRegions: ['main'],
   },
   'agenda-week': {
     type: 'agenda-week',
@@ -38,6 +44,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: AgendaWeekCard,
     defaultConfig: {},
     defaultSize: 'md',
+    allowedRegions: ['main'],
   },
   menu: {
     type: 'menu',
@@ -46,6 +53,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: MenuCard,
     defaultConfig: {},
     defaultSize: 'sm',
+    allowedRegions: ['sidebar'],
   },
   tasks: {
     type: 'tasks',
@@ -54,6 +62,34 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: TasksCard,
     defaultConfig: {},
     defaultSize: 'sm',
+    allowedRegions: ['sidebar'],
+  },
+  'ha-entity': {
+    type: 'ha-entity',
+    displayName: 'HA Entity',
+    icon: '📟',
+    component: HaEntityCard,
+    defaultConfig: { entity_id: '' },
+    defaultSize: 'sm',
+    allowedRegions: ['sidebar', 'main'],
+  },
+  'ha-entities-list': {
+    type: 'ha-entities-list',
+    displayName: 'HA Entities List',
+    icon: '📶',
+    component: HaEntitiesListCard,
+    defaultConfig: { title: 'Entities', entity_ids: [] },
+    defaultSize: 'sm',
+    allowedRegions: ['sidebar', 'main'],
+  },
+  'ha-toggle': {
+    type: 'ha-toggle',
+    displayName: 'HA Toggle',
+    icon: '💡',
+    component: HaToggleCard,
+    defaultConfig: { entity_id: '' },
+    defaultSize: 'sm',
+    allowedRegions: ['sidebar', 'main'],
   },
 };
 

@@ -11,6 +11,8 @@ export interface TodoItem {
 
 export type CardSize = 'sm' | 'md' | 'lg';
 
+export type DashboardRegion = 'topbar' | 'main' | 'sidebar';
+
 /** A single card placed in a dashboard region. */
 export interface DashboardCard {
   id: string;
@@ -72,4 +74,6 @@ export interface CardDefinition {
   component: DashboardCardComponent;
   defaultConfig: Record<string, unknown>;
   defaultSize: CardSize;
+  /** Regions this card type can be placed/added into via the card picker. */
+  allowedRegions: DashboardRegion[];
 }

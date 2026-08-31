@@ -6,7 +6,8 @@ import { useFamilyEvents } from '../hooks/useFamilyEvents';
 import { useMealPlans } from '../hooks/useMealPlans';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import { cardRegistry } from './cards/registry';
-import { DashboardCard, DashboardCardContext, TodoItem } from '../types/dashboard-cards';
+import { DashboardRegionEditor } from './cards/DashboardRegionEditor';
+import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -50,6 +51,7 @@ export function DashboardView({
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
   const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   const toggleMemberFilter = (memberId: string) => {
     setSelectedMemberFilter((prev) => (prev === memberId ? null : memberId));
@@ -71,7 +73,11 @@ export function DashboardView({
 
   const { byMember, other } = useFamilyEvents(events, members, selectedDate);
   const { todaysMenu } = useMealPlans();
-  const { layout: regions } = useDashboardLayout(layout);
+  const { layout: regions, updateLayout } = useDashboardLayout(layout);
+
+  const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
+    updateLayout({ ...regions, [region]: cards });
+  };
 
   // Events for the currently selected day, used by the "other" / fallback view
   const todayEvents = useMemo(() => {
@@ -122,11 +128,26 @@ export function DashboardView({
   if (layout === 'classic') {
     return (
       <div className="dashboard dashboard--classic">
-        {regions.topbar.map((card) => renderCard(card, context))}
+        <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
+          {editMode ? 'Done' : '✎ Edit Dashboard'}
+        </button>
+        {editMode ? (
+          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+        ) : (
+          regions.topbar.map((card) => renderCard(card, context))
+        )}
         <main className="dash-classic">
-          {regions.main.map((card) => renderCard(card, context))}
+          {editMode ? (
+            <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
+          ) : (
+            regions.main.map((card) => renderCard(card, context))
+          )}
           <aside className="dash-classic-col dash-classic-sidebar">
-            {regions.sidebar.map((card) => renderCard(card, context))}
+            {editMode ? (
+              <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
+            ) : (
+              regions.sidebar.map((card) => renderCard(card, context))
+            )}
           </aside>
         </main>
       </div>
@@ -136,16 +157,31 @@ export function DashboardView({
   return (
     <div className={`dashboard dashboard--${layout}`}>
       {/* ─── TOP BAR: Time + Date + Weather ─── */}
-      {regions.topbar.map((card) => renderCard(card, context))}
+      <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
+        {editMode ? 'Done' : '✎ Edit Dashboard'}
+      </button>
+      {editMode ? (
+        <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+      ) : (
+        regions.topbar.map((card) => renderCard(card, context))
+      )}
 
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
-        {regions.main.map((card) => renderCard(card, context))}
+        {editMode ? (
+          <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
+        ) : (
+          regions.main.map((card) => renderCard(card, context))
+        )}
       </main>
 
       {/* ─── SIDEBAR: Menu + Tasks + Chores ─── */}
       <aside className="dash-sidebar">
-        {regions.sidebar.map((card) => renderCard(card, context))}
+        {editMode ? (
+          <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
+        ) : (
+          regions.sidebar.map((card) => renderCard(card, context))
+        )}
       </aside>
     </div>
   );
