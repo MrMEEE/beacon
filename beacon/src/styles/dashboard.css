@@ -775,6 +775,11 @@
   color: var(--color-red-full, #d9534f);
 }
 
+.dash-card-edit-resize {
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
 .dash-card-add-tile {
   border: 1px dashed var(--border, #e5e5e5);
   border-radius: var(--radius-md, 12px);

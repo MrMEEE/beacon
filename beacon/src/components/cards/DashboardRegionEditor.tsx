@@ -57,11 +57,11 @@ export function DashboardRegionEditor({ region, cards, context, onChange, resiza
     onChange(cards.filter((c) => c.id !== id));
   };
 
-  const handleResize = (id: string) => {
+  const handleResize = (id: string, direction: 1 | -1) => {
     onChange(cards.map((c) => {
       if (c.id !== id) return c;
-      const next = SIZE_CYCLE[(SIZE_CYCLE.indexOf(c.size) + 1) % SIZE_CYCLE.length];
-      return { ...c, size: next };
+      const nextIndex = Math.min(SIZE_CYCLE.length - 1, Math.max(0, SIZE_CYCLE.indexOf(c.size) + direction));
+      return { ...c, size: SIZE_CYCLE[nextIndex] };
     }));
   };
 
@@ -85,7 +85,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange, resiza
           sizeClassName={sizeClassName(card.size)}
           onConfigure={() => setConfiguringId(card.id)}
           onRemove={() => handleRemove(card.id)}
-          onResize={() => handleResize(card.id)}
+          onResize={(direction) => handleResize(card.id, direction)}
         />
       ))}
     </SortableContext>
