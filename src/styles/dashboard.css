@@ -132,6 +132,12 @@
   color: var(--text-secondary);
 }
 
+.dash-topbar-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .dash-topbar-weather {
   display: flex;
   align-items: center;
@@ -351,6 +357,43 @@
   letter-spacing: 1px;
   margin-bottom: 16px;
   flex-shrink: 0;
+}
+
+.dash-day-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e5e5);
+  background: var(--bg-elevated, transparent);
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dash-day-nav-btn:hover {
+  background: var(--bg-hover);
+}
+
+.dash-day-nav-today {
+  border: none;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.dash-day-nav-today:hover {
+  background: var(--border, #e5e5e5);
 }
 
 .dashboard-events-scroll {

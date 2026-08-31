@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { startOfWeek, addDays, format } from 'date-fns';
+import { startOfWeek, startOfDay, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
@@ -179,6 +179,9 @@ export function App() {
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
     startOfWeek(new Date(), { weekStartsOn: 0 }),
   );
+
+  // Day currently selected on the Dashboard's day view
+  const [dashboardDate, setDashboardDate] = useState<Date>(() => startOfDay(new Date()));
 
   // Helper: refetch events for a given week, with one extra day on either side
   // so multi-day events that bleed in/out of the visible week still render.
@@ -387,10 +390,11 @@ export function App() {
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
-    setPrefillDate(null);
+    // Default new events to the day currently selected on the dashboard.
+    setPrefillDate(activeView === 'dashboard' ? format(dashboardDate, 'yyyy-MM-dd') : null);
     setPrefillTime(null);
     setShowModal(true);
-  }, []);
+  }, [activeView, dashboardDate]);
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
@@ -560,6 +564,8 @@ export function App() {
               onEventClick={handleEventClick}
               members={members}
               layout={settings.dashboardLayout}
+              selectedDate={dashboardDate}
+              onSelectedDateChange={setDashboardDate}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
