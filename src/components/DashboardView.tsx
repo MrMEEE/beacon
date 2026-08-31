@@ -1,26 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { format, parseISO, isSameDay, startOfDay, addDays } from 'date-fns';
+import { isSameDay, startOfDay, addDays, parseISO } from 'date-fns';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from '../types/family';
-import { weatherIcon, conditionLabel } from '../types/weather-icons';
-import { EventCard } from './EventCard';
-import { TaskChecklist } from './TaskChecklist';
 import { useFamilyEvents } from '../hooks/useFamilyEvents';
 import { useMealPlans } from '../hooks/useMealPlans';
-import { MealType } from '../types/meals';
+import { useDashboardLayout } from '../hooks/useDashboardLayout';
+import { cardRegistry } from './cards/registry';
+import { DashboardCard, DashboardCardContext, TodoItem } from '../types/dashboard-cards';
 
-const MEAL_ICONS: Record<MealType, string> = {
-  Breakfast: '🌅',
-  Lunch: '☀️',
-  Dinner: '🌙',
-  Snack: '🍎',
-};
-
-export interface TodoItem {
-  uid: string;
-  summary: string;
-  status: 'needs_action' | 'completed';
-}
+export type { TodoItem } from '../types/dashboard-cards';
 
 interface DashboardViewProps {
   events: CalendarEvent[];
@@ -36,6 +24,13 @@ interface DashboardViewProps {
   layout?: 'default' | 'classic' | 'compact';
   selectedDate: Date;
   onSelectedDateChange: (date: Date) => void;
+}
+
+function renderCard(card: DashboardCard, context: DashboardCardContext) {
+  const definition = cardRegistry[card.type];
+  if (!definition) return null;
+  const Component = definition.component;
+  return <Component key={card.id} config={card.config} context={context} />;
 }
 
 export function DashboardView({
@@ -74,11 +69,9 @@ export function DashboardView({
     return () => clearInterval(timer);
   }, []);
 
-  const timeString = format(now, 'h:mm');
-  const dateString = format(now, 'EEEE, MMMM d');
-
   const { byMember, other } = useFamilyEvents(events, members, selectedDate);
   const { todaysMenu } = useMealPlans();
+  const { layout: regions } = useDashboardLayout(layout);
 
   // Events for the currently selected day, used by the "other" / fallback view
   const todayEvents = useMemo(() => {
@@ -86,10 +79,6 @@ export function DashboardView({
       .filter((e) => isSameDay(startOfDay(parseISO(e.start)), selectedDate))
       .sort((a, b) => a.start.localeCompare(b.start));
   }, [events, selectedDate]);
-
-  const hasMemberCalendars = members.some(
-    (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,
-  );
 
   // Group the next 7 days of events for the Classic "This Week" column
   const weekEvents = useMemo(() => {
@@ -103,152 +92,41 @@ export function DashboardView({
     });
   }, [events]);
 
-  // ─── Shared pieces reused across layouts ───
-  const topbar = (
-    <header className="dash-topbar">
-      <div className="dash-topbar-left">
-        <span className="dash-topbar-time">{timeString}</span>
-        <div className="dash-topbar-date-nav">
-          <button
-            type="button"
-            className="dash-day-nav-btn"
-            onClick={goToPreviousDay}
-            aria-label="Previous day"
-          >
-            ‹
-          </button>
-          <span className="dash-topbar-date">
-            {isViewingToday ? dateString : format(selectedDate, 'EEEE, MMMM d')}
-          </span>
-          <button
-            type="button"
-            className="dash-day-nav-btn"
-            onClick={goToNextDay}
-            aria-label="Next day"
-          >
-            ›
-          </button>
-          {!isViewingToday && (
-            <button type="button" className="dash-day-nav-today" onClick={goToToday}>
-              Today
-            </button>
-          )}
-        </div>
-      </div>
-      {weather && (
-        <div
-          className={`dash-topbar-weather ${onWeatherClick ? 'dash-topbar-weather--clickable' : ''}`}
-          onClick={onWeatherClick}
-          role={onWeatherClick ? 'button' : undefined}
-          tabIndex={onWeatherClick ? 0 : undefined}
-          onKeyDown={onWeatherClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onWeatherClick(); } : undefined}
-        >
-          <span className="dash-topbar-weather-icon">{weatherIcon(weather.condition)}</span>
-          <span className="dash-topbar-weather-temp">{Math.round(weather.temperature)}°</span>
-          <span className="dash-topbar-weather-cond">{conditionLabel(weather.condition)}</span>
-        </div>
-      )}
-    </header>
-  );
-
-  const sidebarSections = (
-    <>
-      {todaysMenu.meals.length > 0 && (
-        <section className="dash-sidebar-section">
-          <h3 className="dash-sidebar-heading">Menu</h3>
-          <ul className="dash-menu-list">
-            {todaysMenu.meals.map((meal, i) => (
-              <li key={i} className="dash-menu-item">
-                <span className="dash-menu-icon">{MEAL_ICONS[meal.meal_type] || '🍽️'}</span>
-                <div className="dash-menu-info">
-                  <span className="dash-menu-type">{meal.meal_type}</span>
-                  <span className="dash-menu-name">{meal.name}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <section className="dash-sidebar-section">
-        <h3 className="dash-sidebar-heading">Tasks</h3>
-        {(() => {
-          const pending = todoItems.filter((t) => t.status === 'needs_action');
-          if (todoItems.length > 0) {
-            return pending.length > 0 ? (
-              <ul className="task-checklist">
-                {pending.map((item) => (
-                  <li key={item.uid} className="task-checklist-item">
-                    <button
-                      type="button"
-                      className="task-checkbox"
-                      onClick={() => onToggleTodo?.(item.uid, item.status)}
-                      aria-label={`Complete ${item.summary}`}
-                    >
-                      <span className="task-checkbox-box" />
-                    </button>
-                    <span className="task-checklist-label">{item.summary}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="task-checklist-done">All done!</div>
-            );
-          }
-          return (
-            <TaskChecklist
-              chores={filteredChores}
-              completedIds={completedChoreIds}
-              onToggle={onToggleChore}
-              members={members}
-            />
-          );
-        })()}
-      </section>
-    </>
-  );
+  const context: DashboardCardContext = {
+    now,
+    events,
+    weather,
+    onWeatherClick,
+    onEventClick,
+    members,
+    selectedMemberFilter,
+    toggleMemberFilter,
+    byMember,
+    other,
+    selectedDate,
+    isViewingToday,
+    goToPreviousDay,
+    goToNextDay,
+    goToToday,
+    todayEvents,
+    weekEvents,
+    todaysMenu,
+    todoItems,
+    onToggleTodo,
+    filteredChores,
+    completedChoreIds,
+    onToggleChore,
+  };
 
   // ─── Classic: clock + three agenda columns (Today | This Week | Tasks) ───
   if (layout === 'classic') {
     return (
       <div className="dashboard dashboard--classic">
-        {topbar}
+        {regions.topbar.map((card) => renderCard(card, context))}
         <main className="dash-classic">
-          <section className="dash-classic-col">
-            <div className="dashboard-events-scroll">
-              {todayEvents.length === 0 ? (
-                <div className="dashboard-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
-              ) : (
-                <div className="dashboard-events-list">
-                  {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} onClick={onEventClick} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="dash-classic-col">
-            <h2 className="dashboard-section-title">This Week</h2>
-            <div className="dashboard-events-scroll">
-              {weekEvents.map(({ day, events: dayEvents }) => (
-                <div key={day.toISOString()} className="dash-week-day">
-                  <div className="dash-week-day-label">{format(day, 'EEE d')}</div>
-                  {dayEvents.length === 0 ? (
-                    <div className="dash-week-empty">—</div>
-                  ) : (
-                    <div className="dashboard-events-list">
-                      {dayEvents.map((event) => (
-                        <EventCard key={event.id} event={event} onClick={onEventClick} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
+          {regions.main.map((card) => renderCard(card, context))}
           <aside className="dash-classic-col dash-classic-sidebar">
-            {sidebarSections}
+            {regions.sidebar.map((card) => renderCard(card, context))}
           </aside>
         </main>
       </div>
@@ -258,85 +136,16 @@ export function DashboardView({
   return (
     <div className={`dashboard dashboard--${layout}`}>
       {/* ─── TOP BAR: Time + Date + Weather ─── */}
-      {topbar}
+      {regions.topbar.map((card) => renderCard(card, context))}
 
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
-        {hasMemberCalendars ? (
-          <>
-            <div className="dash-family-grid" style={{ '--member-count': members.length } as React.CSSProperties}>
-              {members.map((member) => {
-                const memberEvents = byMember.get(member.id) || [];
-              const isSelected = selectedMemberFilter === member.id;
-              return (
-                <section key={member.id} className={`dash-member-col ${isSelected ? 'dash-member-col--selected' : ''}`}>
-                  <button
-                    type="button"
-                    className="dash-member-header dash-member-header--clickable"
-                    onClick={() => toggleMemberFilter(member.id)}
-                    aria-pressed={isSelected}
-                    aria-label={`Filter chores for ${member.name}`}
-                  >
-                    <span
-                      className="dash-member-avatar"
-                      style={{ backgroundColor: member.color + '22', borderColor: member.color }}
-                    >
-                      {member.avatar}
-                    </span>
-                    <span className="dash-member-name" style={{ color: member.color }}>
-                      {member.name}
-                    </span>
-                  </button>
-                  <div className="dash-member-events">
-                    {memberEvents.length === 0 ? (
-                      <div className="dash-member-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
-                    ) : (
-                      memberEvents.map((event) => (
-                        <EventCard key={event.id} event={event} onClick={onEventClick} />
-                      ))
-                    )}
-                  </div>
-                </section>
-              );
-            })}
-            {other.length > 0 && (
-              <section className="dash-member-col dash-member-col--other">
-                <div className="dash-member-header">
-                  <span className="dash-member-avatar" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border)' }}>
-                    📅
-                  </span>
-                  <span className="dash-member-name">Other</span>
-                </div>
-                <div className="dash-member-events">
-                  {other.map((event) => (
-                    <EventCard key={event.id} event={event} onClick={onEventClick} />
-                  ))}
-                </div>
-              </section>
-            )}
-            </div>
-          </>
-        ) : (
-          /* Fallback: flat event list when no members have calendars assigned */
-          <div className="dash-events-fallback">
-            <div className="dashboard-events-scroll">
-              {todayEvents.length === 0 ? (
-                <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
-              ) : (
-                <div className="dashboard-events-list">
-                  {todayEvents.map((event) => (
-                    <EventCard key={event.id} event={event} onClick={onEventClick} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {regions.main.map((card) => renderCard(card, context))}
       </main>
 
       {/* ─── SIDEBAR: Menu + Tasks + Chores ─── */}
       <aside className="dash-sidebar">
-        {sidebarSections}
+        {regions.sidebar.map((card) => renderCard(card, context))}
       </aside>
     </div>
   );
