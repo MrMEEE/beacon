@@ -55,18 +55,35 @@ function initialFor(preset: DashboardPreset): StoredDashboardLayoutV2 {
 
 /** Migrates the Phase 1-3 single-region-layout shape into the multi-view (Phase 4) shape. */
 function migrate(stored: StoredDashboardLayoutV1 | StoredDashboardLayoutV2, preset: DashboardPreset): StoredDashboardLayoutV2 {
-  if ('version' in stored && stored.version === 2) return stored;
+  if ('version' in stored && stored.version === 2) {
+    return { ...stored, views: stored.views.map((v) => ({ ...v, regions: dedupeRegions(v.regions) })) };
+  }
   const v1 = stored as StoredDashboardLayoutV1;
   return {
     version: 2,
     customized: v1.customized,
     activeViewId: DEFAULT_VIEW_ID,
-    views: [{ id: DEFAULT_VIEW_ID, name: 'Dashboard', regions: v1.regions ?? defaultLayoutFor(preset) }],
+    views: [{ id: DEFAULT_VIEW_ID, name: 'Dashboard', regions: dedupeRegions(v1.regions ?? defaultLayoutFor(preset)) }],
   };
 }
 
 function makeViewId(): string {
   return `view-${Date.now()}`;
+}
+
+/** Drops duplicate-id cards within a region (keeps the last occurrence). */
+function dedupeCards(cards: DashboardCard[]): DashboardCard[] {
+  const byId = new Map<string, DashboardCard>();
+  for (const c of cards) byId.set(c.id, c);
+  return Array.from(byId.values());
+}
+
+function dedupeRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
+  return {
+    topbar: dedupeCards(regions.topbar),
+    main: dedupeCards(regions.main),
+    sidebar: dedupeCards(regions.sidebar),
+  };
 }
 
 /**
@@ -103,7 +120,8 @@ export function useDashboardLayout(preset: DashboardPreset) {
   const regions = isPrimaryView && !stored.customized ? defaultRegions : activeView.regions;
 
   const updateLayout = (regions: DashboardRegionLayout) => {
-    const views = stored.views.map((v, i) => (i === activeIndex ? { ...v, regions } : v));
+    const deduped = dedupeRegions(regions);
+    const views = stored.views.map((v, i) => (i === activeIndex ? { ...v, regions: deduped } : v));
     persist({ ...stored, customized: true, views });
   };
 
