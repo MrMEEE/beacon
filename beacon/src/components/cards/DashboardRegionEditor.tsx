@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import { DashboardCard, DashboardCardContext, DashboardRegion } from '../../types/dashboard-cards';
+import { CardSize, DashboardCard, DashboardCardContext, DashboardRegion } from '../../types/dashboard-cards';
 import { cardRegistry } from './registry';
 import { SortableCardItem } from './SortableCardItem';
 import { CardPickerModal } from './CardPickerModal';
 import { CardConfigModal } from './CardConfigModal';
+
+const SIZE_CYCLE: CardSize[] = ['sm', 'md', 'lg'];
 
 interface DashboardRegionEditorProps {
   region: DashboardRegion;
@@ -45,6 +47,14 @@ export function DashboardRegionEditor({ region, cards, context, onChange }: Dash
     onChange(cards.filter((c) => c.id !== id));
   };
 
+  const handleResize = (id: string) => {
+    onChange(cards.map((c) => {
+      if (c.id !== id) return c;
+      const next = SIZE_CYCLE[(SIZE_CYCLE.indexOf(c.size) + 1) % SIZE_CYCLE.length];
+      return { ...c, size: next };
+    }));
+  };
+
   const handleConfigSave = (id: string, config: Record<string, unknown>) => {
     onChange(cards.map((c) => (c.id === id ? { ...c, config } : c)));
     setConfiguringId(null);
@@ -64,6 +74,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange }: Dash
               configurable={card.type.startsWith('ha-')}
               onConfigure={() => setConfiguringId(card.id)}
               onRemove={() => handleRemove(card.id)}
+              onResize={() => handleResize(card.id)}
             />
           ))}
         </SortableContext>

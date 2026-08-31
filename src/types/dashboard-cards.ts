@@ -28,6 +28,13 @@ export interface DashboardRegionLayout {
   sidebar: DashboardCard[];
 }
 
+/** A single named dashboard "view" (tab), like a Lovelace dashboard view. */
+export interface DashboardLayoutView {
+  id: string;
+  name: string;
+  regions: DashboardRegionLayout;
+}
+
 /**
  * Shared data every card can read from. Built once per DashboardView render
  * so individual cards stay "dumb" (Phase 1); self-fetching HA entity cards

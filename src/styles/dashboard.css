@@ -96,6 +96,16 @@
 
 /* Compact already stacks via the new default flex column */
 
+/* Wraps the topbar region's card(s) + view tabs so it's a single grid item
+   regardless of edit mode (the region editor has no grid-area of its own). */
+.dash-topbar-region {
+  grid-area: topbar;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
 /* ─── TOP BAR ─── */
 .dash-topbar {
   grid-area: topbar;
@@ -901,3 +911,69 @@
 .dash-ha-toggle--on .dash-ha-toggle-switch::after {
   transform: translateX(16px);
 }
+
+/* ─── Card sizing (sidebar cards only — see renderSizedCard) ─── */
+.dash-card--sm {
+  flex: 0 0 auto;
+}
+
+.dash-card--md {
+  flex: 1 1 auto;
+}
+
+.dash-card--lg {
+  flex: 2 1 auto;
+}
+
+/* ─── Dashboard view tabs (multiple named layouts, like Lovelace views) ─── */
+.dash-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dash-view-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dash-view-tab-btn {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e5e5e5);
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dash-view-tab--active .dash-view-tab-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-surface, #fff);
+}
+
+.dash-view-tab-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e5e5);
+  background: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dash-view-tab-add {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px dashed var(--border, #e5e5e5);
+  background: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+

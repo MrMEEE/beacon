@@ -7,6 +7,7 @@ import { useMealPlans } from '../hooks/useMealPlans';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import { cardRegistry } from './cards/registry';
 import { DashboardRegionEditor } from './cards/DashboardRegionEditor';
+import { DashboardViewTabs } from './cards/DashboardViewTabs';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 
 export type { TodoItem } from '../types/dashboard-cards';
@@ -32,6 +33,18 @@ function renderCard(card: DashboardCard, context: DashboardCardContext) {
   if (!definition) return null;
   const Component = definition.component;
   return <Component key={card.id} config={card.config} context={context} />;
+}
+
+/** Like renderCard, but wraps the card so its `size` affects layout (main/sidebar only — topbar's card must stay the direct grid item). */
+function renderSizedCard(card: DashboardCard, context: DashboardCardContext) {
+  const definition = cardRegistry[card.type];
+  if (!definition) return null;
+  const Component = definition.component;
+  return (
+    <div key={card.id} className={`dash-card--${card.size}`}>
+      <Component config={card.config} context={context} />
+    </div>
+  );
 }
 
 export function DashboardView({
@@ -73,7 +86,7 @@ export function DashboardView({
 
   const { byMember, other } = useFamilyEvents(events, members, selectedDate);
   const { todaysMenu } = useMealPlans();
-  const { layout: regions, updateLayout } = useDashboardLayout(layout);
+  const { layout: regions, updateLayout, views, activeViewId, setActiveViewId, addView, renameView, removeView } = useDashboardLayout(layout);
 
   const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
     updateLayout({ ...regions, [region]: cards });
@@ -131,11 +144,24 @@ export function DashboardView({
         <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
           {editMode ? 'Done' : '✎ Edit Dashboard'}
         </button>
-        {editMode ? (
-          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
-        ) : (
-          regions.topbar.map((card) => renderCard(card, context))
-        )}
+        <div className="dash-topbar-region">
+          {(views.length > 1 || editMode) && (
+            <DashboardViewTabs
+              views={views}
+              activeViewId={activeViewId}
+              editMode={editMode}
+              onSelect={setActiveViewId}
+              onAdd={addView}
+              onRename={renameView}
+              onRemove={removeView}
+            />
+          )}
+          {editMode ? (
+            <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+          ) : (
+            regions.topbar.map((card) => renderCard(card, context))
+          )}
+        </div>
         <main className="dash-classic">
           {editMode ? (
             <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
@@ -146,7 +172,7 @@ export function DashboardView({
             {editMode ? (
               <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
             ) : (
-              regions.sidebar.map((card) => renderCard(card, context))
+              regions.sidebar.map((card) => renderSizedCard(card, context))
             )}
           </aside>
         </main>
@@ -160,11 +186,24 @@ export function DashboardView({
       <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
         {editMode ? 'Done' : '✎ Edit Dashboard'}
       </button>
-      {editMode ? (
-        <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
-      ) : (
-        regions.topbar.map((card) => renderCard(card, context))
-      )}
+      <div className="dash-topbar-region">
+        {(views.length > 1 || editMode) && (
+          <DashboardViewTabs
+            views={views}
+            activeViewId={activeViewId}
+            editMode={editMode}
+            onSelect={setActiveViewId}
+            onAdd={addView}
+            onRename={renameView}
+            onRemove={removeView}
+          />
+        )}
+        {editMode ? (
+          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+        ) : (
+          regions.topbar.map((card) => renderCard(card, context))
+        )}
+      </div>
 
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
@@ -180,7 +219,7 @@ export function DashboardView({
         {editMode ? (
           <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
         ) : (
-          regions.sidebar.map((card) => renderCard(card, context))
+          regions.sidebar.map((card) => renderSizedCard(card, context))
         )}
       </aside>
     </div>
