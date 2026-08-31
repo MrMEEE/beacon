@@ -220,7 +220,7 @@ export function DashboardView({
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
         {editMode ? (
-          <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
+          <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} variant="grid" />
         ) : (
           regions.main.map((card) => renderMainCard(card, context))
         )}

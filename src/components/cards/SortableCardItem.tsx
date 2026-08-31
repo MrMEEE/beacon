@@ -8,13 +8,15 @@ interface SortableCardItemProps {
   context: DashboardCardContext;
   configurable: boolean;
   resizable: boolean;
+  /** Class applied for the current card.size (min-height for list regions, grid-span for the main grid). */
+  sizeClassName: string;
   onConfigure: () => void;
   onRemove: () => void;
   onResize: () => void;
 }
 
 /** Drag handle + remove/configure/resize overlay wrapper shown while editing the dashboard. */
-export function SortableCardItem({ card, context, configurable, resizable, onConfigure, onRemove, onResize }: SortableCardItemProps) {
+export function SortableCardItem({ card, context, configurable, resizable, sizeClassName, onConfigure, onRemove, onResize }: SortableCardItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
   const definition = cardRegistry[card.type];
 
@@ -30,7 +32,7 @@ export function SortableCardItem({ card, context, configurable, resizable, onCon
     <div
       ref={setNodeRef}
       style={style}
-      className={`dash-card-edit-wrapper ${resizable ? `dash-card--${card.size}` : ''} ${isDragging ? 'dash-card-edit-wrapper--dragging' : ''}`}
+      className={`dash-card-edit-wrapper ${resizable ? sizeClassName : ''} ${isDragging ? 'dash-card-edit-wrapper--dragging' : ''}`}
     >
       <div className="dash-card-edit-toolbar">
         <button type="button" className="dash-card-edit-btn dash-card-edit-drag" {...attributes} {...listeners} aria-label="Drag to reorder">
