@@ -14,10 +14,12 @@ interface DashboardRegionEditorProps {
   cards: DashboardCard[];
   context: DashboardCardContext;
   onChange: (cards: DashboardCard[]) => void;
+  /** Whether cards in this region can be resized (has a visible effect in the final, non-edit view). */
+  resizable?: boolean;
 }
 
 /** Renders a region's cards as a reorderable/removable/addable list while editing. */
-export function DashboardRegionEditor({ region, cards, context, onChange }: DashboardRegionEditorProps) {
+export function DashboardRegionEditor({ region, cards, context, onChange, resizable = true }: DashboardRegionEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [configuringId, setConfiguringId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange }: Dash
               card={card}
               context={context}
               configurable={card.type.startsWith('ha-')}
-              resizable={region === 'sidebar'}
+              resizable={resizable}
               onConfigure={() => setConfiguringId(card.id)}
               onRemove={() => handleRemove(card.id)}
               onResize={() => handleResize(card.id)}

@@ -189,6 +189,10 @@
 .dash-main {
   grid-area: main;
   min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 20px;
 }
 
 .dash-family-grid {
@@ -926,6 +930,27 @@
 
 .dash-card--lg {
   min-height: 240px;
+}
+
+/* ─── Card sizing for the default/compact layout's main region ───
+   .dash-main is an auto-fit grid, so cards can sit 2-4 across based on size
+   (see renderMainCard). Classic layout's fixed 3-column main is unaffected. */
+.dash-card-span--sm {
+  grid-column: span 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dash-card-span--md {
+  grid-column: span 2;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dash-card-span--lg {
+  grid-column: 1 / -1;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* ─── Dashboard view tabs (multiple named layouts, like Lovelace views) ─── */

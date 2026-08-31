@@ -47,6 +47,18 @@ function renderSizedCard(card: DashboardCard, context: DashboardCardContext) {
   );
 }
 
+/** Wraps a main-region card with a grid column-span based on size, so sm/md cards can sit 2-4 up next to each other in `.dash-main`'s auto-fit grid (default/compact layout only — classic's fixed 3-column main keeps using plain renderCard). */
+function renderMainCard(card: DashboardCard, context: DashboardCardContext) {
+  const definition = cardRegistry[card.type];
+  if (!definition) return null;
+  const Component = definition.component;
+  return (
+    <div key={card.id} className={`dash-card-span--${card.size}`}>
+      <Component config={card.config} context={context} />
+    </div>
+  );
+}
+
 export function DashboardView({
   events,
   weather,
@@ -157,14 +169,14 @@ export function DashboardView({
             />
           )}
           {editMode ? (
-            <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+            <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} resizable={false} />
           ) : (
             regions.topbar.map((card) => renderCard(card, context))
           )}
         </div>
         <main className="dash-classic">
           {editMode ? (
-            <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
+            <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} resizable={false} />
           ) : (
             regions.main.map((card) => renderCard(card, context))
           )}
@@ -199,7 +211,7 @@ export function DashboardView({
           />
         )}
         {editMode ? (
-          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} />
+          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} resizable={false} />
         ) : (
           regions.topbar.map((card) => renderCard(card, context))
         )}
@@ -210,7 +222,7 @@ export function DashboardView({
         {editMode ? (
           <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} />
         ) : (
-          regions.main.map((card) => renderCard(card, context))
+          regions.main.map((card) => renderMainCard(card, context))
         )}
       </main>
 
