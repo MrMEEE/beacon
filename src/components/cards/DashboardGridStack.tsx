@@ -50,12 +50,16 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
   const itemElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const madeWidgetIds = useRef<Set<string>>(new Set());
   const cardsRef = useRef(cards);
+  /** Always the latest onChange — the GridStack 'change' listener is registered
+   * once (mount-only effect) so it must not close over a stale prop. */
+  const onChangeRef = useRef(onChange);
   /** w/h to seed a just-added card with (set by handleAdd, consumed once when it's turned into a widget). */
   const pendingSizeRef = useRef<Map<string, { w: number; h: number }>>(new Map());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [configuringId, setConfiguringId] = useState<string | null>(null);
 
   cardsRef.current = cards;
+  onChangeRef.current = onChange;
 
   const setItemRef = (id: string, el: HTMLDivElement | null) => {
     if (el) {
@@ -83,7 +87,9 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
       if (!node) return c;
       return { ...c, layout: { x: node.x ?? 0, y: node.y ?? 0, w: node.w ?? 1, h: node.h ?? 1 } };
     });
-    onChange(next);
+    // Registered once inside the mount-only effect below, so it must read
+    // the latest onChange via the ref rather than closing over the prop.
+    onChangeRef.current(next);
   };
 
   // Mount GridStack once.
