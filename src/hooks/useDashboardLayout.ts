@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadData, loadDataSync, saveData } from '../api/beacon-store';
 import { DashboardCard, DashboardLayoutView, DashboardRegionLayout, GridPosition } from '../types/dashboard-cards';
 
@@ -96,7 +96,11 @@ export function useDashboardLayout(preset: DashboardPreset) {
   const activeView = stored.views[activeIndex];
   const isPrimaryView = activeView.id === DEFAULT_VIEW_ID;
 
-  const regions = isPrimaryView && !stored.customized ? defaultLayoutFor(preset) : activeView.regions;
+  // Stable reference across re-renders (e.g. the dashboard clock ticking every
+  // second) unless the preset actually changes, so downstream consumers
+  // (GridStack widget diffing, etc.) don't see a spurious "cards changed".
+  const defaultRegions = useMemo(() => defaultLayoutFor(preset), [preset]);
+  const regions = isPrimaryView && !stored.customized ? defaultRegions : activeView.regions;
 
   const updateLayout = (regions: DashboardRegionLayout) => {
     const views = stored.views.map((v, i) => (i === activeIndex ? { ...v, regions } : v));

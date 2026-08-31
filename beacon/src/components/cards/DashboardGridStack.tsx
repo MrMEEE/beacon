@@ -102,6 +102,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
     const grid = gridRef.current;
     if (!grid || rootsRef.current.has(c.id)) return;
     const sizeHint = pendingSizeRef.current.get(c.id);
+    const isNewlyAdded = pendingSizeRef.current.has(c.id);
     pendingSizeRef.current.delete(c.id);
     const widget: GridStackWidget = {
       id: c.id,
@@ -118,6 +119,12 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
       const root = createRoot(contentEl);
       rootsRef.current.set(c.id, root);
       renderCardIntoRoot(c.id, root);
+    }
+    // Existing cards (e.g. the default full-height family calendar) may
+    // already occupy all the visible space, pushing a freshly-added card
+    // below the fold — scroll it into view so it's obvious something happened.
+    if (isNewlyAdded && el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   };
 
