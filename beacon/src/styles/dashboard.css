@@ -912,17 +912,20 @@
   transform: translateX(16px);
 }
 
-/* ─── Card sizing (sidebar cards only — see renderSizedCard) ─── */
+/* ─── Card sizing (sidebar cards only — see renderSizedCard) ───
+   Uses min-height rather than flex-grow: the flex containers these cards
+   live in (.dash-sidebar, .dash-region-editor) size to content with no
+   extra space to distribute, so flex-grow had no visible effect. */
 .dash-card--sm {
-  flex: 0 0 auto;
+  min-height: 48px;
 }
 
 .dash-card--md {
-  flex: 1 1 auto;
+  min-height: 140px;
 }
 
 .dash-card--lg {
-  flex: 2 1 auto;
+  min-height: 240px;
 }
 
 /* ─── Dashboard view tabs (multiple named layouts, like Lovelace views) ─── */

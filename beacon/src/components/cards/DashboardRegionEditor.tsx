@@ -72,6 +72,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange }: Dash
               card={card}
               context={context}
               configurable={card.type.startsWith('ha-')}
+              resizable={region === 'sidebar'}
               onConfigure={() => setConfiguringId(card.id)}
               onRemove={() => handleRemove(card.id)}
               onResize={() => handleResize(card.id)}

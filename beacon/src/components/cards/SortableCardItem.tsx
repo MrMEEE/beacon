@@ -7,13 +7,14 @@ interface SortableCardItemProps {
   card: DashboardCard;
   context: DashboardCardContext;
   configurable: boolean;
+  resizable: boolean;
   onConfigure: () => void;
   onRemove: () => void;
   onResize: () => void;
 }
 
 /** Drag handle + remove/configure/resize overlay wrapper shown while editing the dashboard. */
-export function SortableCardItem({ card, context, configurable, onConfigure, onRemove, onResize }: SortableCardItemProps) {
+export function SortableCardItem({ card, context, configurable, resizable, onConfigure, onRemove, onResize }: SortableCardItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
   const definition = cardRegistry[card.type];
 
@@ -29,15 +30,17 @@ export function SortableCardItem({ card, context, configurable, onConfigure, onR
     <div
       ref={setNodeRef}
       style={style}
-      className={`dash-card-edit-wrapper dash-card--${card.size} ${isDragging ? 'dash-card-edit-wrapper--dragging' : ''}`}
+      className={`dash-card-edit-wrapper ${resizable ? `dash-card--${card.size}` : ''} ${isDragging ? 'dash-card-edit-wrapper--dragging' : ''}`}
     >
       <div className="dash-card-edit-toolbar">
         <button type="button" className="dash-card-edit-btn dash-card-edit-drag" {...attributes} {...listeners} aria-label="Drag to reorder">
           ⠿
         </button>
-        <button type="button" className="dash-card-edit-btn" onClick={onResize} aria-label="Cycle card size" title={`Size: ${card.size}`}>
-          ⤢
-        </button>
+        {resizable && (
+          <button type="button" className="dash-card-edit-btn" onClick={onResize} aria-label="Cycle card size" title={`Size: ${card.size}`}>
+            ⤢
+          </button>
+        )}
         {configurable && (
           <button type="button" className="dash-card-edit-btn" onClick={onConfigure} aria-label="Configure card">
             ⚙
