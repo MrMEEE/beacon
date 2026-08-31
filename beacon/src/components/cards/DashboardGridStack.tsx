@@ -16,12 +16,23 @@ interface DashboardGridStackProps {
 
 const DEFAULT_W = 12;
 const DEFAULT_H = 10;
+const MARGIN = 8;
+/** The main region is treated as 16 logical rows tall, so h:16 always means
+ * "fill the available height" regardless of viewport size (see the
+ * ResizeObserver below, which keeps cellHeight in sync with this). */
+const TOTAL_ROWS = 16;
+
+/** cellHeight (px) so that TOTAL_ROWS rows + their margins exactly fill `height`. */
+function cellHeightFor(height: number): number {
+  const usable = height - (TOTAL_ROWS - 1) * MARGIN;
+  return Math.max(1, usable / TOTAL_ROWS);
+}
 
 /** Width/height (in grid units) to seed a newly added card with, based on its registry default size. */
 function defaultSpanFor(size: DashboardCard['size']): { w: number; h: number } {
   if (size === 'sm') return { w: 3, h: 4 };
-  if (size === 'md') return { w: 6, h: 6 };
-  return { w: 12, h: 10 };
+  if (size === 'md') return { w: 6, h: 8 };
+  return { w: 12, h: TOTAL_ROWS };
 }
 
 /**
@@ -129,8 +140,8 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
     const grid = GridStack.init(
       {
         column: 12,
-        cellHeight: 40,
-        margin: 8,
+        cellHeight: containerRef.current.clientHeight ? cellHeightFor(containerRef.current.clientHeight) : 40,
+        margin: MARGIN,
         float: true,
         staticGrid: !editModeRef.current,
         draggable: { handle: '.dash-card-edit-drag' },
@@ -144,7 +155,17 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
 
     cardsRef.current.forEach((c) => addWidget(c));
 
+    // Keep 1 row == 1/TOTAL_ROWS of the container's actual height, so a
+    // full-height (h:16) card always fills the region, on any screen size.
+    const resizeObserver = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (!height) return;
+      grid.cellHeight(cellHeightFor(height));
+    });
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       rootsRef.current.forEach((root) => root.unmount());
       rootsRef.current.clear();
       grid.destroy(true);

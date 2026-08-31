@@ -953,9 +953,6 @@
 }
 
 .grid-stack-item-content {
-  background: var(--bg-surface, #ffffff);
-  border-radius: var(--radius-md, 12px);
-  box-shadow: var(--shadow-sm);
   overflow: auto;
 }
 
