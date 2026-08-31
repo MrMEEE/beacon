@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { createRoot, Root } from 'react-dom/client';
 import { GridStack, GridStackNode, GridStackWidget } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import { cardRegistry } from './registry';
@@ -38,97 +37,43 @@ function defaultSpanFor(size: DashboardCard['size']): { w: number; h: number } {
 /**
  * Wraps GridStack (https://gridstackjs.com/) for the main region: a real
  * drag-and-resize dashboard grid, replacing the old dnd-kit + manual
- * resize-handle approach. GridStack owns the DOM position of each
- * `.grid-stack-item`; each item's content is a small, independently
- * mounted React root so our card components keep working unmodified.
+ * resize-handle approach.
+ *
+ * React renders each card's `.grid-stack-item` / content normally (it's
+ * just JSX — no manual DOM/root management); GridStack only progressively
+ * *enhances* those already-rendered elements via `makeWidget()`, and we
+ * track which ids have been enhanced in `madeWidgetIds`.
  */
 export function DashboardGridStack({ cards, context, editMode, onChange }: DashboardGridStackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<GridStack | null>(null);
-  const rootsRef = useRef<Map<string, Root>>(new Map());
+  const itemElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const madeWidgetIds = useRef<Set<string>>(new Set());
   const cardsRef = useRef(cards);
-  const contextRef = useRef(context);
-  /** w/h to seed a just-added card with (set by handleAdd, consumed once by addWidget). */
+  /** w/h to seed a just-added card with (set by handleAdd, consumed once when it's turned into a widget). */
   const pendingSizeRef = useRef<Map<string, { w: number; h: number }>>(new Map());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [configuringId, setConfiguringId] = useState<string | null>(null);
 
   cardsRef.current = cards;
-  contextRef.current = context;
 
-  // editMode is read inside GridStack event callbacks (closures captured at
-  // mount time), so mirror it in a ref rather than depending on it directly.
-  const editModeRef = useRef(editMode);
-  editModeRef.current = editMode;
-
-  const renderCardIntoRoot = (id: string, root: Root) => {
-    const c = cardsRef.current.find((x) => x.id === id);
-    const definition = c && cardRegistry[c.type];
-    if (!c || !definition) return;
-    const Component = definition.component;
-    root.render(
-      <div className="dash-gridstack-item-inner">
-        <Component config={c.config} context={contextRef.current} />
-        {editModeRef.current && (
-          <div className="dash-card-edit-toolbar dash-card-edit-toolbar--overlay">
-            <span className="dash-card-edit-btn dash-card-edit-drag" aria-hidden="true" title="Drag to move">
-              ⠿
-            </span>
-            {c.type.startsWith('ha-') && (
-              <button
-                type="button"
-                className="dash-card-edit-btn"
-                onClick={() => setConfiguringId(c.id)}
-                aria-label="Configure card"
-              >
-                ⚙
-              </button>
-            )}
-            <button
-              type="button"
-              className="dash-card-edit-btn dash-card-edit-remove"
-              onClick={() => removeCard(c.id)}
-              aria-label="Remove card"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-      </div>,
-    );
-  };
-
-  const addWidget = (c: DashboardCard) => {
-    const grid = gridRef.current;
-    if (!grid || rootsRef.current.has(c.id)) return;
-    const sizeHint = pendingSizeRef.current.get(c.id);
-    const isNewlyAdded = pendingSizeRef.current.has(c.id);
-    pendingSizeRef.current.delete(c.id);
-    const widget: GridStackWidget = {
-      id: c.id,
-      x: c.layout?.x,
-      y: c.layout?.y,
-      w: sizeHint?.w ?? c.layout?.w ?? DEFAULT_W,
-      h: sizeHint?.h ?? c.layout?.h ?? DEFAULT_H,
-      autoPosition: !c.layout,
-      content: '',
-    };
-    const el = grid.addWidget(widget);
-    const contentEl = el?.querySelector('.grid-stack-item-content');
-    if (contentEl) {
-      const root = createRoot(contentEl);
-      rootsRef.current.set(c.id, root);
-      renderCardIntoRoot(c.id, root);
-    }
-    // Existing cards (e.g. the default full-height family calendar) may
-    // already occupy all the visible space, pushing a freshly-added card
-    // below the fold — scroll it into view so it's obvious something happened.
-    if (isNewlyAdded && el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const setItemRef = (id: string, el: HTMLDivElement | null) => {
+    if (el) {
+      itemElsRef.current.set(id, el);
+    } else {
+      itemElsRef.current.delete(id);
     }
   };
 
   const removeCard = (id: string) => {
+    const grid = gridRef.current;
+    const el = itemElsRef.current.get(id);
+    // Unregister from GridStack's engine while the element is still attached
+    // (removeDOM: false — React removes the actual node on the next render).
+    if (grid && el && madeWidgetIds.current.has(id)) {
+      grid.removeWidget(el, false, false);
+      madeWidgetIds.current.delete(id);
+    }
     onChange(cardsRef.current.filter((c) => c.id !== id));
   };
 
@@ -150,8 +95,13 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
         cellHeight: containerRef.current.clientHeight ? cellHeightFor(containerRef.current.clientHeight) : 40,
         margin: MARGIN,
         float: true,
-        staticGrid: !editModeRef.current,
+        staticGrid: !editMode,
         draggable: { handle: '.dash-card-edit-drag' },
+        // We register every `.grid-stack-item` ourselves via makeWidget()
+        // (see the sync effect below) so both initial and later-added cards
+        // go through the same path — disable GridStack's own auto-scan of
+        // existing DOM children on init to avoid double-registering them.
+        auto: false,
       },
       containerRef.current,
     );
@@ -160,10 +110,6 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
 
     grid.on('change', (_event, nodes) => syncPositions(nodes as GridStackNode[]));
 
-    cardsRef.current.forEach((c) => addWidget(c));
-
-    // Keep 1 row == 1/TOTAL_ROWS of the container's actual height, so a
-    // full-height (h:16) card always fills the region, on any screen size.
     const resizeObserver = new ResizeObserver((entries) => {
       const height = entries[0]?.contentRect.height;
       if (!height) return;
@@ -173,12 +119,11 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
 
     return () => {
       resizeObserver.disconnect();
-      rootsRef.current.forEach((root) => root.unmount());
-      rootsRef.current.clear();
-      grid.destroy(true);
+      grid.destroy(false);
       gridRef.current = null;
+      madeWidgetIds.current.clear();
     };
-    // Only ever set up once — card add/remove/edit-mode are handled by the effects below.
+    // Only ever set up once — editMode/card changes are handled by the effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -187,25 +132,33 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
     gridRef.current?.setStatic(!editMode);
   }, [editMode]);
 
-  // Add/remove GridStack widgets when the set of card ids changes.
+  // Turn any newly-rendered `.grid-stack-item` element into a GridStack
+  // widget. Runs after every render (cheap — guarded by madeWidgetIds), since
+  // a plain dependency array can't express "this card's DOM ref just became
+  // available", which happens on the very next render after it's added.
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid) return;
-    const currentIds = new Set(cards.map((c) => c.id));
-    rootsRef.current.forEach((root, id) => {
-      if (currentIds.has(id)) return;
-      root.unmount();
-      rootsRef.current.delete(id);
-      const el = grid.getGridItems().find((item) => item.getAttribute('gs-id') === id);
-      if (el) grid.removeWidget(el, true, false);
+    cards.forEach((c) => {
+      if (madeWidgetIds.current.has(c.id)) return;
+      const el = itemElsRef.current.get(c.id);
+      if (!el) return;
+      const sizeHint = pendingSizeRef.current.get(c.id);
+      pendingSizeRef.current.delete(c.id);
+      const widget: GridStackWidget = {
+        id: c.id,
+        x: c.layout?.x,
+        y: c.layout?.y,
+        w: sizeHint?.w ?? c.layout?.w ?? DEFAULT_W,
+        h: sizeHint?.h ?? c.layout?.h ?? DEFAULT_H,
+        autoPosition: !c.layout,
+      };
+      grid.makeWidget(el, widget);
+      madeWidgetIds.current.add(c.id);
+      // Existing cards (e.g. the default full-height family calendar) may
+      // already occupy all the visible space — scroll new ones into view.
+      if (sizeHint) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
-    cards.forEach((c) => addWidget(c));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards.map((c) => c.id).join(',')]);
-
-  // Re-render each card's content on config/context changes and to reflect edit-mode toolbar visibility.
-  useEffect(() => {
-    rootsRef.current.forEach((root, id) => renderCardIntoRoot(id, root));
   });
 
   const handleAdd = (type: string) => {
@@ -232,7 +185,47 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
 
   return (
     <div className="dash-gridstack-wrapper">
-      <div className="grid-stack" ref={containerRef} />
+      <div className="grid-stack" ref={containerRef}>
+        {cards.map((c) => {
+          const definition = cardRegistry[c.type];
+          if (!definition) return null;
+          const Component = definition.component;
+          return (
+            <div key={c.id} className="grid-stack-item" ref={(el) => setItemRef(c.id, el)}>
+              <div className="grid-stack-item-content">
+                <div className="dash-gridstack-item-inner">
+                  <Component config={c.config} context={context} />
+                  {editMode && (
+                    <div className="dash-card-edit-toolbar dash-card-edit-toolbar--overlay">
+                      <span className="dash-card-edit-btn dash-card-edit-drag" aria-hidden="true" title="Drag to move">
+                        ⠿
+                      </span>
+                      {c.type.startsWith('ha-') && (
+                        <button
+                          type="button"
+                          className="dash-card-edit-btn"
+                          onClick={() => setConfiguringId(c.id)}
+                          aria-label="Configure card"
+                        >
+                          ⚙
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="dash-card-edit-btn dash-card-edit-remove"
+                        onClick={() => removeCard(c.id)}
+                        aria-label="Remove card"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       {editMode && (
         <button type="button" className="dash-card-add-tile" onClick={() => setPickerOpen(true)}>
           + Add Card
