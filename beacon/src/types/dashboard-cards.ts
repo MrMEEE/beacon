@@ -13,11 +13,22 @@ export type CardSize = 'sm' | 'md' | 'lg';
 
 export type DashboardRegion = 'topbar' | 'main' | 'sidebar';
 
+/** Grid position/size in the main region's GridStack grid (12 columns). */
+export interface GridPosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 /** A single card placed in a dashboard region. */
 export interface DashboardCard {
   id: string;
   type: string;
+  /** Used by list regions (sidebar/topbar) for min-height sizing. */
   size: CardSize;
+  /** Used by the main region's GridStack grid. Absent for list-region cards. */
+  layout?: GridPosition;
   config: Record<string, unknown>;
 }
 

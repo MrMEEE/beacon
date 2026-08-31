@@ -7,6 +7,7 @@ import { useMealPlans } from '../hooks/useMealPlans';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import { cardRegistry } from './cards/registry';
 import { DashboardRegionEditor } from './cards/DashboardRegionEditor';
+import { DashboardGridStack } from './cards/DashboardGridStack';
 import { DashboardViewTabs } from './cards/DashboardViewTabs';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 
@@ -35,25 +36,13 @@ function renderCard(card: DashboardCard, context: DashboardCardContext) {
   return <Component key={card.id} config={card.config} context={context} />;
 }
 
-/** Like renderCard, but wraps the card so its `size` affects layout (main/sidebar only — topbar's card must stay the direct grid item). */
+/** Like renderCard, but wraps the card so its `size` affects layout (sidebar only — topbar's card must stay the direct grid item). */
 function renderSizedCard(card: DashboardCard, context: DashboardCardContext) {
   const definition = cardRegistry[card.type];
   if (!definition) return null;
   const Component = definition.component;
   return (
     <div key={card.id} className={`dash-card--${card.size}`}>
-      <Component config={card.config} context={context} />
-    </div>
-  );
-}
-
-/** Wraps a main-region card with a grid column-span based on size, so sm/md cards can sit 2-4 up next to each other in `.dash-main`'s auto-fit grid (default/compact layout only — classic's fixed 3-column main keeps using plain renderCard). */
-function renderMainCard(card: DashboardCard, context: DashboardCardContext) {
-  const definition = cardRegistry[card.type];
-  if (!definition) return null;
-  const Component = definition.component;
-  return (
-    <div key={card.id} className={`dash-card-span--${card.size}`}>
       <Component config={card.config} context={context} />
     </div>
   );
@@ -219,11 +208,12 @@ export function DashboardView({
 
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
-        {editMode ? (
-          <DashboardRegionEditor region="main" cards={regions.main} context={context} onChange={(c) => updateRegion('main', c)} variant="grid" />
-        ) : (
-          regions.main.map((card) => renderMainCard(card, context))
-        )}
+        <DashboardGridStack
+          cards={regions.main}
+          context={context}
+          editMode={editMode}
+          onChange={(c) => updateRegion('main', c)}
+        />
       </main>
 
       {/* ─── SIDEBAR: Menu + Tasks + Chores ─── */}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loadData, loadDataSync, saveData } from '../api/beacon-store';
-import { DashboardCard, DashboardLayoutView, DashboardRegionLayout } from '../types/dashboard-cards';
+import { DashboardCard, DashboardLayoutView, DashboardRegionLayout, GridPosition } from '../types/dashboard-cards';
 
 const STORAGE_KEY = 'beacon-dashboard-layout';
 const DEFAULT_VIEW_ID = 'default-view';
@@ -20,8 +20,8 @@ interface StoredDashboardLayoutV1 {
   regions: DashboardRegionLayout;
 }
 
-function card(id: string, type: string, size: DashboardCard['size']): DashboardCard {
-  return { id, type, size, config: {} };
+function card(id: string, type: string, size: DashboardCard['size'], layout?: GridPosition): DashboardCard {
+  return { id, type, size, layout, config: {} };
 }
 
 /** Builds the region layout matching today's visual arrangement for a given preset. */
@@ -39,7 +39,7 @@ function defaultLayoutFor(preset: DashboardPreset): DashboardRegionLayout {
   // 'default' and 'compact' both use the per-member family calendar as main content.
   return {
     topbar,
-    main: [card('family-calendar', 'family-calendar', 'lg')],
+    main: [card('family-calendar', 'family-calendar', 'lg', { x: 0, y: 0, w: 12, h: 16 })],
     sidebar,
   };
 }
