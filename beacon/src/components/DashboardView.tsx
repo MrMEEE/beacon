@@ -34,6 +34,8 @@ interface DashboardViewProps {
   onEventClick?: (event: CalendarEvent) => void;
   members?: FamilyMember[];
   layout?: 'default' | 'classic' | 'compact';
+  selectedDate: Date;
+  onSelectedDateChange: (date: Date) => void;
 }
 
 export function DashboardView({
@@ -48,6 +50,8 @@ export function DashboardView({
   onEventClick,
   members = [],
   layout = 'default',
+  selectedDate,
+  onSelectedDateChange,
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
   const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
@@ -55,6 +59,11 @@ export function DashboardView({
   const toggleMemberFilter = (memberId: string) => {
     setSelectedMemberFilter((prev) => (prev === memberId ? null : memberId));
   };
+
+  const goToPreviousDay = () => onSelectedDateChange(addDays(selectedDate, -1));
+  const goToNextDay = () => onSelectedDateChange(addDays(selectedDate, 1));
+  const goToToday = () => onSelectedDateChange(startOfDay(new Date()));
+  const isViewingToday = isSameDay(selectedDate, startOfDay(now));
 
   const filteredChores = selectedMemberFilter
     ? chores.filter((c) => c.assigned_to.includes(selectedMemberFilter))
@@ -68,16 +77,15 @@ export function DashboardView({
   const timeString = format(now, 'h:mm');
   const dateString = format(now, 'EEEE, MMMM d');
 
-  const { byMember, other } = useFamilyEvents(events, members);
+  const { byMember, other } = useFamilyEvents(events, members, selectedDate);
   const { todaysMenu } = useMealPlans();
 
-  // Also compute flat today's events for the "other" / fallback view
+  // Events for the currently selected day, used by the "other" / fallback view
   const todayEvents = useMemo(() => {
-    const today = startOfDay(new Date());
     return events
-      .filter((e) => isSameDay(startOfDay(parseISO(e.start)), today))
+      .filter((e) => isSameDay(startOfDay(parseISO(e.start)), selectedDate))
       .sort((a, b) => a.start.localeCompare(b.start));
-  }, [events]);
+  }, [events, selectedDate]);
 
   const hasMemberCalendars = members.some(
     (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,
@@ -100,7 +108,32 @@ export function DashboardView({
     <header className="dash-topbar">
       <div className="dash-topbar-left">
         <span className="dash-topbar-time">{timeString}</span>
-        <span className="dash-topbar-date">{dateString}</span>
+        <div className="dash-topbar-date-nav">
+          <button
+            type="button"
+            className="dash-day-nav-btn"
+            onClick={goToPreviousDay}
+            aria-label="Previous day"
+          >
+            ‹
+          </button>
+          <span className="dash-topbar-date">
+            {isViewingToday ? dateString : format(selectedDate, 'EEEE, MMMM d')}
+          </span>
+          <button
+            type="button"
+            className="dash-day-nav-btn"
+            onClick={goToNextDay}
+            aria-label="Next day"
+          >
+            ›
+          </button>
+          {!isViewingToday && (
+            <button type="button" className="dash-day-nav-today" onClick={goToToday}>
+              Today
+            </button>
+          )}
+        </div>
       </div>
       {weather && (
         <div
@@ -181,10 +214,9 @@ export function DashboardView({
         {topbar}
         <main className="dash-classic">
           <section className="dash-classic-col">
-            <h2 className="dashboard-section-title">Today</h2>
             <div className="dashboard-events-scroll">
               {todayEvents.length === 0 ? (
-                <div className="dashboard-empty">Nothing scheduled today</div>
+                <div className="dashboard-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
               ) : (
                 <div className="dashboard-events-list">
                   {todayEvents.map((event) => (
@@ -231,9 +263,10 @@ export function DashboardView({
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
         {hasMemberCalendars ? (
-          <div className="dash-family-grid" style={{ '--member-count': members.length } as React.CSSProperties}>
-            {members.map((member) => {
-              const memberEvents = byMember.get(member.id) || [];
+          <>
+            <div className="dash-family-grid" style={{ '--member-count': members.length } as React.CSSProperties}>
+              {members.map((member) => {
+                const memberEvents = byMember.get(member.id) || [];
               const isSelected = selectedMemberFilter === member.id;
               return (
                 <section key={member.id} className={`dash-member-col ${isSelected ? 'dash-member-col--selected' : ''}`}>
@@ -256,7 +289,7 @@ export function DashboardView({
                   </button>
                   <div className="dash-member-events">
                     {memberEvents.length === 0 ? (
-                      <div className="dash-member-empty">Nothing today</div>
+                      <div className="dash-member-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
                     ) : (
                       memberEvents.map((event) => (
                         <EventCard key={event.id} event={event} onClick={onEventClick} />
@@ -281,11 +314,11 @@ export function DashboardView({
                 </div>
               </section>
             )}
-          </div>
+            </div>
+          </>
         ) : (
           /* Fallback: flat event list when no members have calendars assigned */
           <div className="dash-events-fallback">
-            <h2 className="dashboard-section-title">Today</h2>
             <div className="dashboard-events-scroll">
               {todayEvents.length === 0 ? (
                 <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
