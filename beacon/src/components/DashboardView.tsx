@@ -9,6 +9,12 @@ import { cardRegistry } from './cards/registry';
 import { DashboardRegionEditor } from './cards/DashboardRegionEditor';
 import { DashboardGridStack } from './cards/DashboardGridStack';
 import { DashboardViewTabs } from './cards/DashboardViewTabs';
+import { ClockWeatherCard } from './cards/ClockWeatherCard';
+import { FamilyCalendarCard } from './cards/FamilyCalendarCard';
+import { AgendaTodayCard } from './cards/AgendaTodayCard';
+import { AgendaWeekCard } from './cards/AgendaWeekCard';
+import { MenuCard } from './cards/MenuCard';
+import { TasksCard } from './cards/TasksCard';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 
 export type { TodoItem } from '../types/dashboard-cards';
@@ -25,6 +31,7 @@ interface DashboardViewProps {
   onEventClick?: (event: CalendarEvent) => void;
   members?: FamilyMember[];
   layout?: 'default' | 'classic' | 'compact';
+  advancedDashboard?: boolean;
   selectedDate: Date;
   onSelectedDateChange: (date: Date) => void;
 }
@@ -48,6 +55,7 @@ export function DashboardView({
   onEventClick,
   members = [],
   layout = 'default',
+  advancedDashboard = false,
   selectedDate,
   onSelectedDateChange,
 }: DashboardViewProps) {
@@ -126,10 +134,44 @@ export function DashboardView({
     onToggleChore,
   };
 
+  // The legacy composition deliberately bypasses cards, GridStack, persisted
+  // widget layouts, and edit mode. This preserves the pre-modular dashboard
+  // until Advanced Dashboard is explicitly enabled in Appearance settings.
+  if (!advancedDashboard) {
+    if (layout === 'classic') {
+      return (
+        <div className="dashboard dashboard--classic">
+          <ClockWeatherCard config={{}} context={context} />
+          <main className="dash-classic">
+            <AgendaTodayCard config={{}} context={context} />
+            <AgendaWeekCard config={{}} context={context} />
+            <aside className="dash-classic-col dash-classic-sidebar">
+              <MenuCard config={{}} context={context} />
+              <TasksCard config={{}} context={context} />
+            </aside>
+          </main>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`dashboard dashboard--${layout}`}>
+        <ClockWeatherCard config={{}} context={context} />
+        <main className="dash-main">
+          <FamilyCalendarCard config={{}} context={context} />
+        </main>
+        <aside className="dash-sidebar">
+          <MenuCard config={{}} context={context} />
+          <TasksCard config={{}} context={context} />
+        </aside>
+      </div>
+    );
+  }
+
   // ─── Classic: clock + three agenda columns (Today | This Week | Tasks) ───
   if (layout === 'classic') {
     return (
-      <div className="dashboard dashboard--classic">
+      <div className="dashboard dashboard--classic dashboard--advanced">
         <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
           {editMode ? 'Done' : '✎ Edit Dashboard'}
         </button>
@@ -174,7 +216,7 @@ export function DashboardView({
   }
 
   return (
-    <div className={`dashboard dashboard--${layout}`}>
+    <div className={`dashboard dashboard--${layout} dashboard--advanced`}>
       {/* ─── TOP BAR: Time + Date + Weather ─── */}
       <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
         {editMode ? 'Done' : '✎ Edit Dashboard'}

@@ -564,6 +564,7 @@ export function App() {
               onEventClick={handleEventClick}
               members={members}
               layout={settings.dashboardLayout}
+              advancedDashboard={settings.advancedDashboard}
               selectedDate={dashboardDate}
               onSelectedDateChange={setDashboardDate}
             />

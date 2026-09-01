@@ -189,6 +189,9 @@
 .dash-main {
   grid-area: main;
   min-height: 0;
+}
+
+.dashboard--advanced .dash-main {
   display: flex;
   flex-direction: column;
 }
