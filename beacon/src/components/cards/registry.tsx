@@ -17,7 +17,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: ClockWeatherCard,
     defaultConfig: {},
     defaultSize: 'lg',
-    allowedRegions: ['topbar'],
+    allowedRegions: ['topbar', 'main', 'sidebar'],
   },
   'family-calendar': {
     type: 'family-calendar',
@@ -71,7 +71,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaEntityCard,
     defaultConfig: { entity_id: '' },
     defaultSize: 'sm',
-    allowedRegions: ['sidebar', 'main'],
+    allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-entities-list': {
     type: 'ha-entities-list',
@@ -80,7 +80,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaEntitiesListCard,
     defaultConfig: { title: 'Entities', entity_ids: [] },
     defaultSize: 'sm',
-    allowedRegions: ['sidebar', 'main'],
+    allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-toggle': {
     type: 'ha-toggle',
@@ -89,7 +89,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaToggleCard,
     defaultConfig: { entity_id: '' },
     defaultSize: 'sm',
-    allowedRegions: ['sidebar', 'main'],
+    allowedRegions: ['topbar', 'sidebar', 'main'],
   },
 };
 

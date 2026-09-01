@@ -26,7 +26,7 @@ function card(id: string, type: string, size: DashboardCard['size'], layout?: Gr
 
 /** Builds the region layout matching today's visual arrangement for a given preset. */
 function defaultLayoutFor(preset: DashboardPreset): DashboardRegionLayout {
-  const topbar = [card('clock-weather', 'clock-weather', 'lg')];
+  const topbar = [card('clock-weather', 'clock-weather', 'lg', { x: 0, y: 0, w: 12, h: 2 })];
   const sidebar = [card('menu', 'menu', 'sm'), card('tasks', 'tasks', 'sm')];
 
   if (preset === 'classic') {

@@ -4,9 +4,10 @@ import 'gridstack/dist/gridstack.min.css';
 import { cardRegistry } from './registry';
 import { CardPickerModal } from './CardPickerModal';
 import { CardConfigModal } from './CardConfigModal';
-import { DashboardCard, DashboardCardContext } from '../../types/dashboard-cards';
+import { DashboardCard, DashboardCardContext, DashboardRegion } from '../../types/dashboard-cards';
 
 interface DashboardGridStackProps {
+  region: DashboardRegion;
   cards: DashboardCard[];
   context: DashboardCardContext;
   editMode: boolean;
@@ -21,14 +22,16 @@ const MARGIN = 8;
  * ResizeObserver below, which keeps cellHeight in sync with this). */
 const TOTAL_ROWS = 16;
 
-/** cellHeight (px) so that TOTAL_ROWS rows + their margins exactly fill `height`. */
-function cellHeightFor(height: number): number {
-  const usable = height - (TOTAL_ROWS - 1) * MARGIN;
-  return Math.max(1, usable / TOTAL_ROWS);
+/** cellHeight (px) so that `rows` rows plus their margins fill `height`. */
+function cellHeightFor(height: number, rows: number): number {
+  const usable = height - (rows - 1) * MARGIN;
+  return Math.max(1, usable / rows);
 }
 
 /** Width/height (in grid units) to seed a newly added card with, based on its registry default size. */
-function defaultSpanFor(size: DashboardCard['size']): { w: number; h: number } {
+function defaultSpanFor(region: DashboardRegion, size: DashboardCard['size']): { w: number; h: number } {
+  if (region === 'topbar') return { w: 6, h: 2 };
+  if (region === 'sidebar') return { w: 12, h: size === 'sm' ? 3 : 5 };
   if (size === 'sm') return { w: 3, h: 4 };
   if (size === 'md') return { w: 6, h: 8 };
   return { w: 12, h: TOTAL_ROWS };
@@ -44,7 +47,8 @@ function defaultSpanFor(size: DashboardCard['size']): { w: number; h: number } {
  * *enhances* those already-rendered elements via `makeWidget()`, and we
  * track which ids have been enhanced in `madeWidgetIds`.
  */
-export function DashboardGridStack({ cards, context, editMode, onChange }: DashboardGridStackProps) {
+export function DashboardGridStack({ region, cards, context, editMode, onChange }: DashboardGridStackProps) {
+  const rowCount = region === 'topbar' ? 2 : TOTAL_ROWS;
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<GridStack | null>(null);
   const itemElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -98,7 +102,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
     const grid = GridStack.init(
       {
         column: 12,
-        cellHeight: containerRef.current.clientHeight ? cellHeightFor(containerRef.current.clientHeight) : 40,
+        cellHeight: containerRef.current.clientHeight ? cellHeightFor(containerRef.current.clientHeight, rowCount) : 40,
         margin: MARGIN,
         float: true,
         staticGrid: !editMode,
@@ -119,7 +123,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
     const resizeObserver = new ResizeObserver((entries) => {
       const height = entries[0]?.contentRect.height;
       if (!height) return;
-      grid.cellHeight(cellHeightFor(height));
+      grid.cellHeight(cellHeightFor(height, rowCount));
     });
     resizeObserver.observe(containerRef.current);
 
@@ -165,8 +169,8 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
         id: c.id,
         x: c.layout?.x,
         y: c.layout?.y,
-        w: sizeHint?.w ?? c.layout?.w ?? DEFAULT_W,
-        h: sizeHint?.h ?? c.layout?.h ?? DEFAULT_H,
+        w: sizeHint?.w ?? c.layout?.w ?? defaultSpanFor(region, c.size).w ?? DEFAULT_W,
+        h: sizeHint?.h ?? c.layout?.h ?? defaultSpanFor(region, c.size).h ?? DEFAULT_H,
         autoPosition: !c.layout,
       };
       grid.makeWidget(el, widget);
@@ -186,7 +190,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
       size: definition.defaultSize,
       config: { ...definition.defaultConfig },
     };
-    pendingSizeRef.current.set(newCard.id, defaultSpanFor(definition.defaultSize));
+    pendingSizeRef.current.set(newCard.id, defaultSpanFor(region, definition.defaultSize));
     onChange([...cardsRef.current, newCard]);
     setPickerOpen(false);
   };
@@ -200,7 +204,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
   const configuringCard = cards.find((c) => c.id === configuringId) ?? null;
 
   return (
-    <div className="dash-gridstack-wrapper">
+    <div className={`dash-gridstack-wrapper dash-gridstack-wrapper--${region}`}>
       <div className="grid-stack" ref={containerRef}>
         {cards.map((c) => {
           const definition = cardRegistry[c.type];
@@ -253,7 +257,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
         </button>
       )}
       {pickerOpen && (
-        <CardPickerModal region="main" onPick={handleAdd} onClose={() => setPickerOpen(false)} />
+        <CardPickerModal region={region} onPick={handleAdd} onClose={() => setPickerOpen(false)} />
       )}
       {configuringCard && (
         <CardConfigModal card={configuringCard} onSave={handleConfigSave} onClose={() => setConfiguringId(null)} />

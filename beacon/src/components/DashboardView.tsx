@@ -36,18 +36,6 @@ function renderCard(card: DashboardCard, context: DashboardCardContext) {
   return <Component key={card.id} config={card.config} context={context} />;
 }
 
-/** Like renderCard, but wraps the card so its `size` affects layout (sidebar only — topbar's card must stay the direct grid item). */
-function renderSizedCard(card: DashboardCard, context: DashboardCardContext) {
-  const definition = cardRegistry[card.type];
-  if (!definition) return null;
-  const Component = definition.component;
-  return (
-    <div key={card.id} className={`dash-card--${card.size}`}>
-      <Component config={card.config} context={context} />
-    </div>
-  );
-}
-
 export function DashboardView({
   events,
   weather,
@@ -157,11 +145,13 @@ export function DashboardView({
               onRemove={removeView}
             />
           )}
-          {editMode ? (
-            <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} resizable={false} />
-          ) : (
-            regions.topbar.map((card) => renderCard(card, context))
-          )}
+            <DashboardGridStack
+              region="topbar"
+              cards={regions.topbar}
+              context={context}
+              editMode={editMode}
+              onChange={(c) => updateRegion('topbar', c)}
+            />
         </div>
         <main className="dash-classic">
           {editMode ? (
@@ -170,11 +160,13 @@ export function DashboardView({
             regions.main.map((card) => renderCard(card, context))
           )}
           <aside className="dash-classic-col dash-classic-sidebar">
-            {editMode ? (
-              <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
-            ) : (
-              regions.sidebar.map((card) => renderSizedCard(card, context))
-            )}
+            <DashboardGridStack
+              region="sidebar"
+              cards={regions.sidebar}
+              context={context}
+              editMode={editMode}
+              onChange={(c) => updateRegion('sidebar', c)}
+            />
           </aside>
         </main>
       </div>
@@ -199,16 +191,19 @@ export function DashboardView({
             onRemove={removeView}
           />
         )}
-        {editMode ? (
-          <DashboardRegionEditor region="topbar" cards={regions.topbar} context={context} onChange={(c) => updateRegion('topbar', c)} resizable={false} />
-        ) : (
-          regions.topbar.map((card) => renderCard(card, context))
-        )}
+        <DashboardGridStack
+          region="topbar"
+          cards={regions.topbar}
+          context={context}
+          editMode={editMode}
+          onChange={(c) => updateRegion('topbar', c)}
+        />
       </div>
 
       {/* ─── MAIN: Per-member calendar columns ─── */}
       <main className="dash-main">
         <DashboardGridStack
+          region="main"
           cards={regions.main}
           context={context}
           editMode={editMode}
@@ -218,11 +213,13 @@ export function DashboardView({
 
       {/* ─── SIDEBAR: Menu + Tasks + Chores ─── */}
       <aside className="dash-sidebar">
-        {editMode ? (
-          <DashboardRegionEditor region="sidebar" cards={regions.sidebar} context={context} onChange={(c) => updateRegion('sidebar', c)} />
-        ) : (
-          regions.sidebar.map((card) => renderSizedCard(card, context))
-        )}
+        <DashboardGridStack
+          region="sidebar"
+          cards={regions.sidebar}
+          context={context}
+          editMode={editMode}
+          onChange={(c) => updateRegion('sidebar', c)}
+        />
       </aside>
     </div>
   );
