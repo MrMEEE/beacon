@@ -49,6 +49,7 @@ function defaultSpanFor(region: DashboardRegion, size: DashboardCard['size']): {
  */
 export function DashboardGridStack({ region, cards, context, editMode, onChange }: DashboardGridStackProps) {
   const rowCount = region === 'topbar' ? 2 : TOTAL_ROWS;
+  const growsWithContent = region === 'topbar';
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<GridStack | null>(null);
   const itemElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -102,7 +103,11 @@ export function DashboardGridStack({ region, cards, context, editMode, onChange 
     const grid = GridStack.init(
       {
         column: 12,
-        cellHeight: containerRef.current.clientHeight ? cellHeightFor(containerRef.current.clientHeight, rowCount) : 40,
+        cellHeight: growsWithContent
+          ? 48
+          : containerRef.current.clientHeight
+            ? cellHeightFor(containerRef.current.clientHeight, rowCount)
+            : 40,
         margin: MARGIN,
         float: true,
         staticGrid: !editMode,
@@ -120,15 +125,15 @@ export function DashboardGridStack({ region, cards, context, editMode, onChange 
 
     grid.on('change', (_event, nodes) => syncPositions(nodes as GridStackNode[]));
 
-    const resizeObserver = new ResizeObserver((entries) => {
+    const resizeObserver = growsWithContent ? null : new ResizeObserver((entries) => {
       const height = entries[0]?.contentRect.height;
       if (!height) return;
       grid.cellHeight(cellHeightFor(height, rowCount));
     });
-    resizeObserver.observe(containerRef.current);
+    if (resizeObserver) resizeObserver.observe(containerRef.current);
 
     return () => {
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
       grid.destroy(false);
       gridRef.current = null;
       madeWidgetIds.current.clear();

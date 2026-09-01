@@ -988,16 +988,20 @@
   position: relative;
 }
 
-/* Topbar cards share a shallow 2-row canvas; the sidebar consumes its full
-   available height. Both are true GridStack canvases, just with geometry
-   appropriate to their regions. */
+/* The topbar grows as its GridStack canvas adds rows; the sidebar consumes
+   its full available height. */
 .dash-gridstack-wrapper--topbar {
-  flex: 0 0 104px;
+  flex: 0 0 auto;
   min-height: 104px;
 }
 
 .dash-gridstack-wrapper--sidebar {
   height: 100%;
+}
+
+.dash-gridstack-wrapper--topbar .grid-stack {
+  flex: 0 0 auto;
+  overflow-y: visible;
 }
 
 .grid-stack {
