@@ -145,6 +145,16 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid) return;
+    const currentIds = new Set(cards.map((c) => c.id));
+    // React removes the prior view's DOM before this effect runs, but GridStack
+    // retains its nodes until explicitly told otherwise. Leaving them behind
+    // makes a subsequently selected view collide with invisible widgets.
+    grid.engine.nodes
+      .filter((node) => node.id && !currentIds.has(node.id))
+      .forEach((node) => {
+        if (node.el) grid.removeWidget(node.el, false, false);
+        madeWidgetIds.current.delete(node.id!);
+      });
     cards.forEach((c) => {
       if (madeWidgetIds.current.has(c.id)) return;
       const el = itemElsRef.current.get(c.id);
@@ -203,9 +213,14 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
                   <Component config={c.config} context={context} />
                   {editMode && (
                     <div className="dash-card-edit-toolbar dash-card-edit-toolbar--overlay">
-                      <span className="dash-card-edit-btn dash-card-edit-drag" aria-hidden="true" title="Drag to move">
+                      <button
+                        type="button"
+                        className="dash-card-edit-btn dash-card-edit-drag"
+                        aria-label="Drag to move"
+                        title="Drag to move"
+                      >
                         ⠿
-                      </span>
+                      </button>
                       {c.type.startsWith('ha-') && (
                         <button
                           type="button"

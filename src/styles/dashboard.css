@@ -956,6 +956,19 @@
   overflow: auto;
 }
 
+/* Reveal GridStack's 12-column placement grid and widget bounds while editing. */
+.grid-stack:not(.grid-stack-static) {
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: calc(100% / 12) 100%, 100% var(--gs-cell-height);
+}
+
+.grid-stack:not(.grid-stack-static) > .grid-stack-item > .grid-stack-item-content {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
 .dash-gridstack-item-inner {
   position: relative;
   height: 100%;
