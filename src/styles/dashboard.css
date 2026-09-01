@@ -961,7 +961,11 @@
   background-image:
     linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
     linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
-  background-size: calc(100% / 12) 100%, 100% var(--gs-cell-height);
+  /* GridStack positions the content inside each cell using these margin
+     variables. Start every guide at that same inset so it matches the
+     dashed content outline rather than the invisible outer cell. */
+  background-position: var(--gs-item-margin-left) var(--gs-item-margin-top);
+  background-size: var(--gs-column-width) 100%, 100% var(--gs-cell-height);
 }
 
 .grid-stack:not(.grid-stack-static) > .grid-stack-item > .grid-stack-item-content {
