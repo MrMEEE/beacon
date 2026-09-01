@@ -65,7 +65,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange, resiza
   const configuringCard = cards.find((c) => c.id === configuringId) ?? null;
 
   return (
-    <div className="dash-region-editor">
+    <div className={`dash-region-editor dash-region-editor--${region}`}>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
           {cards.map((card) => (
@@ -83,7 +83,7 @@ export function DashboardRegionEditor({ region, cards, context, onChange, resiza
           ))}
         </SortableContext>
       </DndContext>
-      <button type="button" className="dash-card-add-tile" onClick={() => setPickerOpen(true)}>
+      <button type="button" className="dash-card-add-float" onClick={() => setPickerOpen(true)}>
         + Add Card
       </button>
       {pickerOpen && (

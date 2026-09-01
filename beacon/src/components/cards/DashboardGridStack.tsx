@@ -248,7 +248,7 @@ export function DashboardGridStack({ cards, context, editMode, onChange }: Dashb
         })}
       </div>
       {editMode && (
-        <button type="button" className="dash-card-add-tile" onClick={() => setPickerOpen(true)}>
+        <button type="button" className="dash-card-add-float" onClick={() => setPickerOpen(true)}>
           + Add Card
         </button>
       )}

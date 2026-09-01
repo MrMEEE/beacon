@@ -738,6 +738,7 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  position: relative;
 }
 
 .dash-card-edit-wrapper {
@@ -778,18 +779,58 @@
   touch-action: none;
 }
 
-.dash-card-add-tile {
-  border: 1px dashed var(--border, #e5e5e5);
-  border-radius: var(--radius-md, 12px);
-  padding: 16px;
-  background: none;
-  color: var(--text-muted);
+.dash-card-add-float {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 18px;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary);
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
-.dash-card-add-tile:hover {
+.dash-card-add-float:hover {
   background: var(--bg-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* The topbar's add control sits between its cards, while the sidebar's sits
+   away from the bottom-right resize handle on its final card. */
+.dash-region-editor--topbar .dash-card-add-float {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.dash-region-editor--sidebar .dash-card-add-float {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+/* Give the list-based regions the same placement context as the GridStack
+   board. Topbar guides divide its available width; sidebar guides mark
+   vertical card rows without altering layout. */
+.dash-region-editor--topbar {
+  background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px);
+  background-size: calc(100% / 12) 100%;
+}
+
+.dash-region-editor--sidebar {
+  background-image: linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 100% 48px;
+}
+
+.dash-region-editor--topbar .dash-card-edit-wrapper,
+.dash-region-editor--sidebar .dash-card-edit-wrapper {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
 }
 
 .dash-card-picker-list {
@@ -944,6 +985,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
 }
 
 .grid-stack {
