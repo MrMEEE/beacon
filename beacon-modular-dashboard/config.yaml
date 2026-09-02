@@ -1,0 +1,34 @@
+name: Beacon Modular Dashboard
+version: "0.1.0"
+slug: beacon-modular-dashboard
+description: "Experimental modular dashboard preview for Beacon"
+url: "https://github.com/MrMEEE/beacon"
+image: ghcr.io/mrmeee/beacon-modular-dashboard
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: application
+boot: auto
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:view-dashboard-edit
+panel_title: Beacon Modular Dashboard
+homeassistant_api: true
+auth_api: true
+options:
+  family_name: "My Family"
+  theme: "skylight"
+  auto_dark_mode: true
+  weather_entity: "weather.home"
+  photo_directory: "/media/beacon/photos"
+  photo_interval: 30
+  screen_saver_timeout: 5
+schema:
+  family_name: str
+  theme: str
+  auto_dark_mode: bool
+  weather_entity: str
+  photo_directory: str
+  photo_interval: int
+  screen_saver_timeout: int
