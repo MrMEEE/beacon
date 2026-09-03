@@ -1,5 +1,5 @@
 name: Beacon Modular Dashboard
-version: "0.1.1"
+version: "0.1.2"
 slug: beacon-modular-dashboard
 description: "Experimental modular dashboard preview for Beacon"
 url: "https://github.com/MrMEEE/beacon"
@@ -10,6 +10,7 @@ arch:
   - armv7
 startup: application
 boot: auto
+init: false
 ingress: true
 ingress_port: 3000
 panel_icon: mdi:view-dashboard-edit
