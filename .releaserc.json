@@ -13,6 +13,9 @@
       "assets": ["CHANGELOG.md", "beacon/CHANGELOG.md", "config.yaml", "beacon/config.yaml", "package.json"],
       "message": "release: ${nextRelease.version}\n\n${nextRelease.notes}\n\nCo-Authored-By: claude-flow <ruv@ruv.net>"
     }],
-    "@semantic-release/github"
+    ["@semantic-release/github", {
+      "successComment": false,
+      "failComment": false
+    }]
   ]
 }
