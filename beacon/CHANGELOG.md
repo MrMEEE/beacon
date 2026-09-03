@@ -1,3 +1,10 @@
+## [1.33.7](https://github.com/MrMEEE/beacon/compare/v1.33.6...v1.33.7) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** remove unsupported preview package visibility call ([01fff3d](https://github.com/MrMEEE/beacon/commit/01fff3d516f886f688e417911c53fd18d96e3c79))
+
 ## [1.33.6](https://github.com/MrMEEE/beacon/compare/v1.33.5...v1.33.6) (2026-09-03)
 
 
