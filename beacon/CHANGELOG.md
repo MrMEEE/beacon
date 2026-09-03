@@ -1,3 +1,10 @@
+## [1.33.2](https://github.com/MrMEEE/beacon/compare/v1.33.1...v1.33.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* **release:** restore 1.33.1 baseline after repository migration ([5f98e29](https://github.com/MrMEEE/beacon/commit/5f98e29340fdde53f2352197a091be0bfaba9f5f))
+
 ## [1.33.1](https://github.com/asachs01/beacon/compare/v1.33.0...v1.33.1) (2026-08-12)
 
 
