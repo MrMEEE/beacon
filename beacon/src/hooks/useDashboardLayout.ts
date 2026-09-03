@@ -7,6 +7,14 @@ const DEFAULT_VIEW_ID = 'default-view';
 
 type DashboardPreset = 'default' | 'classic' | 'compact';
 
+interface StoredDashboardLayoutV3 {
+  version: 3;
+  customized: boolean;
+  activeViewId: string;
+  views: DashboardLayoutView[];
+}
+
+/** Previous multi-view layout shape, using 12 columns in every region. */
 interface StoredDashboardLayoutV2 {
   version: 2;
   customized: boolean;
@@ -26,7 +34,7 @@ function card(id: string, type: string, size: DashboardCard['size'], layout?: Gr
 
 /** Builds the region layout matching today's visual arrangement for a given preset. */
 function defaultLayoutFor(preset: DashboardPreset): DashboardRegionLayout {
-  const topbar = [card('clock-weather', 'clock-weather', 'lg', { x: 0, y: 0, w: 12, h: 2 })];
+  const topbar = [card('clock-weather', 'clock-weather', 'lg', { x: 0, y: 0, w: 24, h: 2 })];
   const sidebar = [card('menu', 'menu', 'sm'), card('tasks', 'tasks', 'sm')];
 
   if (preset === 'classic') {
@@ -39,31 +47,63 @@ function defaultLayoutFor(preset: DashboardPreset): DashboardRegionLayout {
   // 'default' and 'compact' both use the per-member family calendar as main content.
   return {
     topbar,
-    main: [card('family-calendar', 'family-calendar', 'lg', { x: 0, y: 0, w: 12, h: 16 })],
+    main: [card('family-calendar', 'family-calendar', 'lg', { x: 0, y: 0, w: 24, h: 16 })],
     sidebar,
   };
 }
 
-function initialFor(preset: DashboardPreset): StoredDashboardLayoutV2 {
+function initialFor(preset: DashboardPreset): StoredDashboardLayoutV3 {
   return {
-    version: 2,
+    version: 3,
     customized: false,
     activeViewId: DEFAULT_VIEW_ID,
     views: [{ id: DEFAULT_VIEW_ID, name: 'Dashboard', regions: defaultLayoutFor(preset) }],
   };
 }
 
-/** Migrates the Phase 1-3 single-region-layout shape into the multi-view (Phase 4) shape. */
-function migrate(stored: StoredDashboardLayoutV1 | StoredDashboardLayoutV2, preset: DashboardPreset): StoredDashboardLayoutV2 {
+/** Doubles x/width in regions whose column count changed from 12 to 24. */
+function widenRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
+  const widenCards = (cards: DashboardCard[]) => cards.map((dashboardCard) => (
+    dashboardCard.layout
+      ? {
+        ...dashboardCard,
+        layout: {
+          ...dashboardCard.layout,
+          x: dashboardCard.layout.x * 2,
+          w: dashboardCard.layout.w * 2,
+        },
+      }
+      : dashboardCard
+  ));
+  return {
+    topbar: widenCards(regions.topbar),
+    main: widenCards(regions.main),
+    sidebar: regions.sidebar,
+  };
+}
+
+/** Migrates persisted dashboard layouts to the current multi-view grid shape. */
+function migrate(stored: StoredDashboardLayoutV1 | StoredDashboardLayoutV2 | StoredDashboardLayoutV3, preset: DashboardPreset): StoredDashboardLayoutV3 {
+  if ('version' in stored && stored.version === 3) {
+    return { ...stored, views: stored.views.map((view) => ({ ...view, regions: dedupeRegions(view.regions) })) };
+  }
   if ('version' in stored && stored.version === 2) {
-    return { ...stored, views: stored.views.map((v) => ({ ...v, regions: dedupeRegions(v.regions) })) };
+    return {
+      ...stored,
+      version: 3,
+      views: stored.views.map((view) => ({ ...view, regions: dedupeRegions(widenRegions(view.regions)) })),
+    };
   }
   const v1 = stored as StoredDashboardLayoutV1;
   return {
-    version: 2,
+    version: 3,
     customized: v1.customized,
     activeViewId: DEFAULT_VIEW_ID,
-    views: [{ id: DEFAULT_VIEW_ID, name: 'Dashboard', regions: dedupeRegions(v1.regions ?? defaultLayoutFor(preset)) }],
+    views: [{
+      id: DEFAULT_VIEW_ID,
+      name: 'Dashboard',
+      regions: dedupeRegions(v1.regions ? widenRegions(v1.regions) : defaultLayoutFor(preset)),
+    }],
   };
 }
 
@@ -94,7 +134,7 @@ function dedupeRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
  * fully custom (they have no preset to fall back to).
  */
 export function useDashboardLayout(preset: DashboardPreset) {
-  const [stored, setStored] = useState<StoredDashboardLayoutV2>(() =>
+  const [stored, setStored] = useState<StoredDashboardLayoutV3>(() =>
     migrate(loadDataSync(STORAGE_KEY, initialFor(preset)), preset),
   );
 
@@ -104,7 +144,7 @@ export function useDashboardLayout(preset: DashboardPreset) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const persist = (next: StoredDashboardLayoutV2) => {
+  const persist = (next: StoredDashboardLayoutV3) => {
     setStored(next);
     saveData(STORAGE_KEY, next);
   };

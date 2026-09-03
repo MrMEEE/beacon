@@ -14,7 +14,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: mrmeee/beacon-modular-dashboard
-  IMAGE_TAG: "0.1.6"
+  IMAGE_TAG: "0.1.7"
 
 jobs:
   build:

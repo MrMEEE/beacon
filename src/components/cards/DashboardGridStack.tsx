@@ -14,7 +14,9 @@ interface DashboardGridStackProps {
   onChange: (cards: DashboardCard[]) => void;
 }
 
-const DEFAULT_W = 12;
+const MAIN_GRID_COLUMNS = 24;
+const SIDEBAR_GRID_COLUMNS = 12;
+const DEFAULT_W = MAIN_GRID_COLUMNS;
 const DEFAULT_H = 10;
 const MARGIN = 8;
 /** The main region is treated as 16 logical rows tall, so h:16 always means
@@ -30,11 +32,11 @@ function cellHeightFor(height: number, rows: number): number {
 
 /** Width/height (in grid units) to seed a newly added card with, based on its registry default size. */
 function defaultSpanFor(region: DashboardRegion, size: DashboardCard['size']): { w: number; h: number } {
-  if (region === 'topbar') return { w: 6, h: 2 };
-  if (region === 'sidebar') return { w: 12, h: size === 'sm' ? 3 : 5 };
-  if (size === 'sm') return { w: 3, h: 4 };
-  if (size === 'md') return { w: 6, h: 8 };
-  return { w: 12, h: TOTAL_ROWS };
+  if (region === 'topbar') return { w: 12, h: 2 };
+  if (region === 'sidebar') return { w: SIDEBAR_GRID_COLUMNS, h: size === 'sm' ? 3 : 5 };
+  if (size === 'sm') return { w: 6, h: 4 };
+  if (size === 'md') return { w: 12, h: 8 };
+  return { w: MAIN_GRID_COLUMNS, h: TOTAL_ROWS };
 }
 
 /**
@@ -48,6 +50,7 @@ function defaultSpanFor(region: DashboardRegion, size: DashboardCard['size']): {
  * track which ids have been enhanced in `madeWidgetIds`.
  */
 export function DashboardGridStack({ region, cards, context, editMode, onChange }: DashboardGridStackProps) {
+  const columnCount = region === 'sidebar' ? SIDEBAR_GRID_COLUMNS : MAIN_GRID_COLUMNS;
   const rowCount = region === 'topbar' ? 2 : TOTAL_ROWS;
   const growsWithContent = region === 'topbar';
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,7 +105,7 @@ export function DashboardGridStack({ region, cards, context, editMode, onChange 
     if (!containerRef.current) return;
     const grid = GridStack.init(
       {
-        column: 12,
+        column: columnCount,
         cellHeight: growsWithContent
           ? 48
           : containerRef.current.clientHeight
