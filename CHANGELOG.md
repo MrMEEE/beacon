@@ -1,3 +1,10 @@
+## [1.33.8](https://github.com/MrMEEE/beacon/compare/v1.33.7...v1.33.8) (2026-09-03)
+
+
+### Bug Fixes
+
+* **preview:** bump modular dashboard image to 0.1.1 ([f1eebb0](https://github.com/MrMEEE/beacon/commit/f1eebb01d621b519ecd41c9d598b1204cfef41a8))
+
 ## [1.33.7](https://github.com/MrMEEE/beacon/compare/v1.33.6...v1.33.7) (2026-09-03)
 
 
