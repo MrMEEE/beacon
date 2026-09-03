@@ -10,8 +10,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <a href="https://github.com/asachs01/beacon/releases"><img src="https://img.shields.io/github/v/release/asachs01/beacon" alt="Version" /></a>
-  <a href="https://github.com/asachs01/beacon/stargazers"><img src="https://img.shields.io/github/stars/asachs01/beacon" alt="Stars" /></a>
+  <a href="https://github.com/MrMEEE/beacon/releases"><img src="https://img.shields.io/github/v/release/MrMEEE/beacon" alt="Version" /></a>
+  <a href="https://github.com/MrMEEE/beacon/stargazers"><img src="https://img.shields.io/github/stars/MrMEEE/beacon" alt="Stars" /></a>
   <a href="https://github.com/sponsors/asachs01"><img src="https://img.shields.io/badge/sponsor-♥-ea4aaa.svg" alt="GitHub Sponsors" /></a>
   <a href="https://buymeacoffee.com/aaronsachs"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-☕-yellow.svg" alt="Buy Me A Coffee" /></a>
 </p>
@@ -54,7 +54,7 @@ Or install manually:
 
 1. In Home Assistant, go to **Settings > Add-ons > Add-on Store**
 2. Click the overflow menu (**...**) and select **Repositories**
-3. Add: `https://github.com/asachs01/beacon`
+3. Add: `https://github.com/MrMEEE/beacon`
 4. Find **Beacon** in the store and click **Install**
 5. Start the add-on and click **Open Web UI**
 
@@ -63,7 +63,7 @@ Or install manually:
 ### Standalone / Development
 
 ```bash
-git clone https://github.com/asachs01/beacon.git
+git clone https://github.com/MrMEEE/beacon.git
 cd beacon
 npm install
 npm run dev

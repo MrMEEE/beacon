@@ -1,6 +1,6 @@
 # Beacon — Claude Code Plugin
 
-Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from Claude Code.
+Control your [Beacon](https://github.com/MrMEEE/beacon) family dashboard from Claude Code.
 
 ## What you get
 
@@ -18,7 +18,7 @@ Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from 
 
 1. Install the plugin:
    ```
-   /plugin marketplace add asachs01/beacon
+   /plugin marketplace add MrMEEE/beacon
    ```
 
 2. Set environment variables (or create `.env` from `.env.example`):
