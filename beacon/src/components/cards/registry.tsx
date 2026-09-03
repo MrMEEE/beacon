@@ -105,10 +105,10 @@ export const cardRegistry: Record<string, CardDefinition> = {
     displayName: 'HA Toggle',
     icon: '💡',
     component: HaToggleCard,
-    defaultConfig: { entity_id: '', title: '', subtitle: '' },
+    defaultConfig: { entity_ids: [], title: '', subtitle: '' },
     defaultSize: 'sm',
     configFields: [
-      { type: 'entity', key: 'entity_id', label: 'Entity' },
+      { type: 'entity-list', key: 'entity_ids', label: 'Entities', legacyKey: 'entity_id' },
       { type: 'text', key: 'title', label: 'Title' },
       { type: 'text', key: 'subtitle', label: 'Subtitle' },
     ],

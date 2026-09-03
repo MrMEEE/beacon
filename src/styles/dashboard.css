@@ -941,6 +941,12 @@
   color: var(--text-primary);
 }
 
+.dash-ha-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .dash-ha-toggle-switch {
   width: 36px;
   height: 20px;

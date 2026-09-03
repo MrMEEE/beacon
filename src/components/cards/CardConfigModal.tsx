@@ -9,14 +9,25 @@ interface CardConfigModalProps {
   onClose: () => void;
 }
 
+function initialConfig(card: DashboardCard) {
+  const definition = getCardDefinition(card.type);
+  const config = { ...definition?.defaultConfig, ...card.config };
+  definition?.configFields?.forEach((field) => {
+    if (field.type !== 'entity-list' || !field.legacyKey || Array.isArray(config[field.key])) return;
+    const legacyValue = config[field.legacyKey];
+    if (typeof legacyValue === 'string' && legacyValue) {
+      config[field.key] = [legacyValue];
+      delete config[field.legacyKey];
+    }
+  });
+  return config;
+}
+
 /** Generic per-card-type configuration form for advanced dashboard cards. */
 export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps) {
   const definition = getCardDefinition(card.type);
   const fields = definition?.configFields ?? [];
-  const [config, setConfig] = useState<Record<string, unknown>>(() => ({
-    ...definition?.defaultConfig,
-    ...card.config,
-  }));
+  const [config, setConfig] = useState<Record<string, unknown>>(() => initialConfig(card));
   const options = useEntityOptions();
 
   const updateConfig = (key: string, value: unknown) => {

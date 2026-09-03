@@ -101,6 +101,8 @@ export type CardConfigField =
     type: 'entity-list';
     key: string;
     label: string;
+    /** Previous single-entity key to migrate into this list when configured. */
+    legacyKey?: string;
   }
   | {
     type: 'toggle';
