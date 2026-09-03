@@ -1,3 +1,11 @@
+## [1.33.10](https://github.com/MrMEEE/beacon/compare/v1.33.9...v1.33.10) (2026-09-03)
+
+
+### Bug Fixes
+
+* **docker:** register Beacon as an s6 service ([d13789d](https://github.com/MrMEEE/beacon/commit/d13789d6247cd15e980981b81540851def911163))
+* **preview:** build modular dashboard image 0.1.3 ([4949d18](https://github.com/MrMEEE/beacon/commit/4949d189729513e5d4c584ee6e7bfa72127bebad))
+
 ## [1.33.9](https://github.com/MrMEEE/beacon/compare/v1.33.8...v1.33.9) (2026-09-03)
 
 
