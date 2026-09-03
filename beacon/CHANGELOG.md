@@ -1,3 +1,10 @@
+## [1.33.9](https://github.com/MrMEEE/beacon/compare/v1.33.8...v1.33.9) (2026-09-03)
+
+
+### Bug Fixes
+
+* **addon:** disable supervisor init for s6 images ([8a2a39c](https://github.com/MrMEEE/beacon/commit/8a2a39c392ad45682777d730d1f41a318332aa37))
+
 ## [1.33.8](https://github.com/MrMEEE/beacon/compare/v1.33.7...v1.33.8) (2026-09-03)
 
 
