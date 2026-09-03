@@ -50,12 +50,3 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:modular-dashboard
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Make preview image public
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api \
-            --method PATCH \
-            "/user/packages/container/beacon-modular-dashboard" \
-            -f visibility=public
