@@ -1,3 +1,10 @@
+## [1.33.4](https://github.com/MrMEEE/beacon/compare/v1.33.3...v1.33.4) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** publish add-on images under MrMEEE GHCR namespace ([9f991e7](https://github.com/MrMEEE/beacon/commit/9f991e780b43a1d46c987c575377973ada2b05e6))
+
 ## [1.33.3](https://github.com/MrMEEE/beacon/compare/v1.33.2...v1.33.3) (2026-09-03)
 
 
