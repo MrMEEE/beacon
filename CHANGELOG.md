@@ -1,3 +1,10 @@
+## [1.33.3](https://github.com/MrMEEE/beacon/compare/v1.33.2...v1.33.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **release:** skip GitHub PR comments after publish ([c25b85c](https://github.com/MrMEEE/beacon/commit/c25b85ceb290494bb43527a5b1b1c3f6e506a83b))
+
 ## [1.33.2](https://github.com/MrMEEE/beacon/compare/v1.33.1...v1.33.2) (2026-09-03)
 
 
