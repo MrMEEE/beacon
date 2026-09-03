@@ -230,7 +230,7 @@ export function DashboardGridStack({ region, cards, context, editMode, onChange 
                       >
                         ⠿
                       </button>
-                      {c.type.startsWith('ha-') && (
+                      {definition.configurable && (
                         <button
                           type="button"
                           className="dash-card-edit-btn"
