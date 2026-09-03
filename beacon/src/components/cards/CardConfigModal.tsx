@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardCard } from '../../types/dashboard-cards';
 import { EntityPicker, useEntityOptions } from './EntityPicker';
+import { getCardDefinition } from './registry';
 
 interface CardConfigModalProps {
   card: DashboardCard;
@@ -10,23 +11,25 @@ interface CardConfigModalProps {
 
 /** Generic per-card-type configuration form for advanced dashboard cards. */
 export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps) {
-  const [entityId, setEntityId] = useState(typeof card.config.entity_id === 'string' ? card.config.entity_id : '');
-  const [title, setTitle] = useState(typeof card.config.title === 'string' ? card.config.title : '');
-  const [subtitle, setSubtitle] = useState(typeof card.config.subtitle === 'string' ? card.config.subtitle : '');
-  const [showOther, setShowOther] = useState(card.config.show_other !== false);
-  const [entityIds, setEntityIds] = useState<string[]>(
-    Array.isArray(card.config.entity_ids) ? (card.config.entity_ids as string[]) : [],
-  );
+  const definition = getCardDefinition(card.type);
+  const fields = definition?.configFields ?? [];
+  const [config, setConfig] = useState<Record<string, unknown>>(() => ({
+    ...definition?.defaultConfig,
+    ...card.config,
+  }));
   const options = useEntityOptions();
 
-  const toggleEntity = (id: string) => {
-    setEntityIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const updateConfig = (key: string, value: unknown) => {
+    setConfig((previous) => ({ ...previous, [key]: value }));
   };
 
-  const handleSave = () => {
-    if (card.type === 'family-calendar') return onSave({ show_other: showOther });
-    if (card.type === 'ha-entities-list') return onSave({ title, subtitle, entity_ids: entityIds });
-    onSave({ entity_id: entityId, title, subtitle });
+  const toggleEntity = (key: string, entityId: string) => {
+    const entityIds = Array.isArray(config[key])
+      ? (config[key] as unknown[]).filter((id): id is string => typeof id === 'string')
+      : [];
+    updateConfig(key, entityIds.includes(entityId)
+      ? entityIds.filter((id) => id !== entityId)
+      : [...entityIds, entityId]);
   };
 
   return (
@@ -37,77 +40,73 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
           <button type="button" className="modal-close" onClick={onClose}>&#x2715;</button>
         </div>
         <div className="modal-body">
-          {card.type === 'family-calendar' ? (
-            <div className="settings-row">
-              <div>
-                <div className="settings-row-label">Show Other</div>
-                <div className="settings-row-sublabel">Display events not assigned to a family member</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={showOther}
-                onChange={(e) => setShowOther(e.target.checked)}
-                aria-label="Show Other events"
-              />
-            </div>
-          ) : card.type === 'ha-entities-list' ? (
-            <>
-              <div className="form-field">
-                <label className="form-label" htmlFor="card-config-title">Title</label>
-                <input
-                  id="card-config-title"
-                  className="form-input"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div className="form-field">
-                <label className="form-label" htmlFor="card-config-subtitle">Subtitle</label>
-                <input
-                  id="card-config-subtitle"
-                  className="form-input"
-                  type="text"
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                />
-              </div>
-              <div className="form-field">
-                <label className="form-label">Entities</label>
-                <div className="dash-card-picker-entity-list">
-                  {options.map((opt) => (
-                    <label key={opt.entity_id} className="dash-card-picker-entity-option">
-                      <input
-                        type="checkbox"
-                        checked={entityIds.includes(opt.entity_id)}
-                        onChange={() => toggleEntity(opt.entity_id)}
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
+          {fields.map((field) => {
+            const id = `card-config-${field.key}`;
+            if (field.type === 'toggle') {
+              return (
+                <div key={field.key} className="settings-row">
+                  <div>
+                    <div className="settings-row-label">{field.label}</div>
+                    {field.description && <div className="settings-row-sublabel">{field.description}</div>}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={config[field.key] === true}
+                    onChange={(event) => updateConfig(field.key, event.target.checked)}
+                    aria-label={field.label}
+                  />
                 </div>
+              );
+            }
+            if (field.type === 'entity-list') {
+              const entityIds = Array.isArray(config[field.key])
+                ? (config[field.key] as unknown[]).filter((id): id is string => typeof id === 'string')
+                : [];
+              return (
+                <div key={field.key} className="form-field">
+                  <label className="form-label">{field.label}</label>
+                  <div className="dash-card-picker-entity-list">
+                    {options.map((option) => (
+                      <label key={option.entity_id} className="dash-card-picker-entity-option">
+                        <input
+                          type="checkbox"
+                          checked={entityIds.includes(option.entity_id)}
+                          onChange={() => toggleEntity(field.key, option.entity_id)}
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+            const rawValue = config[field.key];
+            const value = typeof rawValue === 'string' ? rawValue : '';
+            return (
+              <div key={field.key} className="form-field">
+                <label className="form-label" htmlFor={id}>{field.label}</label>
+                {field.type === 'entity' ? (
+                  <EntityPicker
+                    id={id}
+                    value={value}
+                    onChange={(value) => updateConfig(field.key, value)}
+                  />
+                ) : (
+                  <input
+                    id={id}
+                    className="form-input"
+                    type="text"
+                    value={value}
+                    onChange={(event) => updateConfig(field.key, event.target.value)}
+                  />
+                )}
               </div>
-            </>
-          ) : (
-            <>
-              <div className="form-field">
-                <label className="form-label" htmlFor="card-config-entity">Entity</label>
-                <EntityPicker id="card-config-entity" value={entityId} onChange={setEntityId} />
-              </div>
-              <div className="form-field">
-                <label className="form-label" htmlFor="card-config-title">Title</label>
-                <input id="card-config-title" className="form-input" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              <div className="form-field">
-                <label className="form-label" htmlFor="card-config-subtitle">Subtitle</label>
-                <input id="card-config-subtitle" className="form-input" type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
-              </div>
-            </>
-          )}
+            );
+          })}
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn--secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn btn--primary" onClick={handleSave}>Save</button>
+          <button type="button" className="btn btn--primary" onClick={() => onSave(config)}>Save</button>
         </div>
       </div>
     </div>

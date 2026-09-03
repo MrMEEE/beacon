@@ -26,7 +26,14 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: FamilyCalendarCard,
     defaultConfig: { show_other: true },
     defaultSize: 'lg',
-    configurable: true,
+    configFields: [
+      {
+        type: 'toggle',
+        key: 'show_other',
+        label: 'Show Other',
+        description: 'Display events not assigned to a family member',
+      },
+    ],
     allowedRegions: ['main'],
   },
   'agenda-today': {
@@ -72,7 +79,11 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaEntityCard,
     defaultConfig: { entity_id: '', title: '', subtitle: '' },
     defaultSize: 'sm',
-    configurable: true,
+    configFields: [
+      { type: 'entity', key: 'entity_id', label: 'Entity' },
+      { type: 'text', key: 'title', label: 'Title' },
+      { type: 'text', key: 'subtitle', label: 'Subtitle' },
+    ],
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-entities-list': {
@@ -82,7 +93,11 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaEntitiesListCard,
     defaultConfig: { title: 'Entities', subtitle: '', entity_ids: [] },
     defaultSize: 'sm',
-    configurable: true,
+    configFields: [
+      { type: 'text', key: 'title', label: 'Title' },
+      { type: 'text', key: 'subtitle', label: 'Subtitle' },
+      { type: 'entity-list', key: 'entity_ids', label: 'Entities' },
+    ],
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-toggle': {
@@ -92,7 +107,11 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: HaToggleCard,
     defaultConfig: { entity_id: '', title: '', subtitle: '' },
     defaultSize: 'sm',
-    configurable: true,
+    configFields: [
+      { type: 'entity', key: 'entity_id', label: 'Entity' },
+      { type: 'text', key: 'title', label: 'Title' },
+      { type: 'text', key: 'subtitle', label: 'Subtitle' },
+    ],
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
 };

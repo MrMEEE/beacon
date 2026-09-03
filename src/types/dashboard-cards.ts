@@ -86,6 +86,29 @@ export interface DashboardCardProps {
 
 export type DashboardCardComponent = ComponentType<DashboardCardProps>;
 
+export type CardConfigField =
+  | {
+    type: 'text';
+    key: string;
+    label: string;
+  }
+  | {
+    type: 'entity';
+    key: string;
+    label: string;
+  }
+  | {
+    type: 'entity-list';
+    key: string;
+    label: string;
+  }
+  | {
+    type: 'toggle';
+    key: string;
+    label: string;
+    description?: string;
+  };
+
 export interface CardDefinition {
   type: string;
   displayName: string;
@@ -93,8 +116,8 @@ export interface CardDefinition {
   component: DashboardCardComponent;
   defaultConfig: Record<string, unknown>;
   defaultSize: CardSize;
-  /** Whether edit mode should offer this card a configuration control. */
-  configurable?: boolean;
+  /** Declarative fields rendered by the shared card configuration modal. */
+  configFields?: CardConfigField[];
   /** Regions this card type can be placed/added into via the card picker. */
   allowedRegions: DashboardRegion[];
 }

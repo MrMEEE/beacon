@@ -230,7 +230,7 @@ export function DashboardGridStack({ region, cards, context, editMode, onChange 
                       >
                         ⠿
                       </button>
-                      {definition.configurable && (
+                      {(definition.configFields?.length ?? 0) > 0 && (
                         <button
                           type="button"
                           className="dash-card-edit-btn"
