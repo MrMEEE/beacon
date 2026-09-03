@@ -1,3 +1,11 @@
+## [1.33.6](https://github.com/MrMEEE/beacon/compare/v1.33.5...v1.33.6) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** publish modular dashboard preview image publicly ([76939c2](https://github.com/MrMEEE/beacon/commit/76939c23fcf2d8a9df0395b35e5c8c677d6d9b7a))
+* **docker:** restore Home Assistant s6 add-on entrypoint ([ab6e371](https://github.com/MrMEEE/beacon/commit/ab6e37167675b8f6cdf5248501e83055cd095a69))
+
 ## [1.33.5](https://github.com/MrMEEE/beacon/compare/v1.33.4...v1.33.5) (2026-09-03)
 
 
