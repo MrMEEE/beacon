@@ -1,3 +1,10 @@
+## [1.33.5](https://github.com/MrMEEE/beacon/compare/v1.33.4...v1.33.5) (2026-09-03)
+
+
+### Bug Fixes
+
+* **docs:** point Home Assistant repository links to MrMEEE ([57a818d](https://github.com/MrMEEE/beacon/commit/57a818d15d9cef1930c28211ff33c988e9bad82f))
+
 ## [1.33.4](https://github.com/MrMEEE/beacon/compare/v1.33.3...v1.33.4) (2026-09-03)
 
 
