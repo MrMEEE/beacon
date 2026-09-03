@@ -5,6 +5,7 @@ import { weatherIcon, conditionLabel } from '../../types/weather-icons';
 export function ClockWeatherCard({ context }: DashboardCardProps) {
   const {
     now,
+    timeFormat,
     weather,
     onWeatherClick,
     selectedDate,
@@ -13,7 +14,7 @@ export function ClockWeatherCard({ context }: DashboardCardProps) {
     goToNextDay,
     goToToday,
   } = context;
-  const timeString = format(now, 'h:mm');
+  const timeString = format(now, timeFormat === '24h' ? 'HH:mm' : 'h:mm a');
   const dateString = format(now, 'EEEE, MMMM d');
 
   return (

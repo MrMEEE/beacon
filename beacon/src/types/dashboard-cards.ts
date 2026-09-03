@@ -53,6 +53,7 @@ export interface DashboardLayoutView {
  */
 export interface DashboardCardContext {
   now: Date;
+  timeFormat: '12h' | '24h';
   events: CalendarEvent[];
   weather: WeatherData | null;
   onWeatherClick?: () => void;
@@ -92,6 +93,8 @@ export interface CardDefinition {
   component: DashboardCardComponent;
   defaultConfig: Record<string, unknown>;
   defaultSize: CardSize;
+  /** Whether edit mode should offer this card a configuration control. */
+  configurable?: boolean;
   /** Regions this card type can be placed/added into via the card picker. */
   allowedRegions: DashboardRegion[];
 }

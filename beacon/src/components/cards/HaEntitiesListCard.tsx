@@ -20,7 +20,8 @@ export function HaEntitiesListCard({ config }: DashboardCardProps) {
   const entityIds = Array.isArray(config.entity_ids)
     ? (config.entity_ids as unknown[]).filter((id): id is string => typeof id === 'string')
     : [];
-  const title = typeof config.title === 'string' ? config.title : 'Entities';
+  const title = typeof config.title === 'string' && config.title.trim() ? config.title.trim() : 'Entities';
+  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
   const [entities, setEntities] = useState<Record<string, EntityState>>({});
 
   useEffect(() => {
@@ -48,6 +49,8 @@ export function HaEntitiesListCard({ config }: DashboardCardProps) {
   if (entityIds.length === 0) {
     return (
       <section className="dash-sidebar-section dash-ha-card">
+        <h3 className="dash-sidebar-heading">{title}</h3>
+        {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
         <div className="dash-ha-card-empty">No entities selected — configure this card</div>
       </section>
     );
@@ -56,6 +59,7 @@ export function HaEntitiesListCard({ config }: DashboardCardProps) {
   return (
     <section className="dash-sidebar-section dash-ha-card">
       <h3 className="dash-sidebar-heading">{title}</h3>
+      {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
       <ul className="dash-ha-entities-list">
         {entityIds.map((id) => {
           const entity = entities[id];

@@ -32,6 +32,7 @@ interface DashboardViewProps {
   members?: FamilyMember[];
   layout?: 'default' | 'classic' | 'compact';
   advancedDashboard?: boolean;
+  timeFormat: '12h' | '24h';
   selectedDate: Date;
   onSelectedDateChange: (date: Date) => void;
 }
@@ -56,6 +57,7 @@ export function DashboardView({
   members = [],
   layout = 'default',
   advancedDashboard = false,
+  timeFormat,
   selectedDate,
   onSelectedDateChange,
 }: DashboardViewProps) {
@@ -110,6 +112,7 @@ export function DashboardView({
 
   const context: DashboardCardContext = {
     now,
+    timeFormat,
     events,
     weather,
     onWeatherClick,

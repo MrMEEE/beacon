@@ -24,8 +24,9 @@ export const cardRegistry: Record<string, CardDefinition> = {
     displayName: 'Family Calendar',
     icon: '📅',
     component: FamilyCalendarCard,
-    defaultConfig: {},
+    defaultConfig: { show_other: true },
     defaultSize: 'lg',
+    configurable: true,
     allowedRegions: ['main'],
   },
   'agenda-today': {
@@ -69,8 +70,9 @@ export const cardRegistry: Record<string, CardDefinition> = {
     displayName: 'HA Entity',
     icon: '📟',
     component: HaEntityCard,
-    defaultConfig: { entity_id: '' },
+    defaultConfig: { entity_id: '', title: '', subtitle: '' },
     defaultSize: 'sm',
+    configurable: true,
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-entities-list': {
@@ -78,8 +80,9 @@ export const cardRegistry: Record<string, CardDefinition> = {
     displayName: 'HA Entities List',
     icon: '📶',
     component: HaEntitiesListCard,
-    defaultConfig: { title: 'Entities', entity_ids: [] },
+    defaultConfig: { title: 'Entities', subtitle: '', entity_ids: [] },
     defaultSize: 'sm',
+    configurable: true,
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
   'ha-toggle': {
@@ -87,8 +90,9 @@ export const cardRegistry: Record<string, CardDefinition> = {
     displayName: 'HA Toggle',
     icon: '💡',
     component: HaToggleCard,
-    defaultConfig: { entity_id: '' },
+    defaultConfig: { entity_id: '', title: '', subtitle: '' },
     defaultSize: 'sm',
+    configurable: true,
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
 };

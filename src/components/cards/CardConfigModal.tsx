@@ -8,10 +8,12 @@ interface CardConfigModalProps {
   onClose: () => void;
 }
 
-/** Generic per-card-type config form (only HA card types are configurable today). */
+/** Generic per-card-type configuration form for advanced dashboard cards. */
 export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps) {
   const [entityId, setEntityId] = useState(typeof card.config.entity_id === 'string' ? card.config.entity_id : '');
-  const [title, setTitle] = useState(typeof card.config.title === 'string' ? card.config.title : 'Entities');
+  const [title, setTitle] = useState(typeof card.config.title === 'string' ? card.config.title : '');
+  const [subtitle, setSubtitle] = useState(typeof card.config.subtitle === 'string' ? card.config.subtitle : '');
+  const [showOther, setShowOther] = useState(card.config.show_other !== false);
   const [entityIds, setEntityIds] = useState<string[]>(
     Array.isArray(card.config.entity_ids) ? (card.config.entity_ids as string[]) : [],
   );
@@ -22,11 +24,9 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
   };
 
   const handleSave = () => {
-    if (card.type === 'ha-entities-list') {
-      onSave({ title, entity_ids: entityIds });
-    } else {
-      onSave({ entity_id: entityId });
-    }
+    if (card.type === 'family-calendar') return onSave({ show_other: showOther });
+    if (card.type === 'ha-entities-list') return onSave({ title, subtitle, entity_ids: entityIds });
+    onSave({ entity_id: entityId, title, subtitle });
   };
 
   return (
@@ -37,7 +37,20 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
           <button type="button" className="modal-close" onClick={onClose}>&#x2715;</button>
         </div>
         <div className="modal-body">
-          {card.type === 'ha-entities-list' ? (
+          {card.type === 'family-calendar' ? (
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">Show Other</div>
+                <div className="settings-row-sublabel">Display events not assigned to a family member</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={showOther}
+                onChange={(e) => setShowOther(e.target.checked)}
+                aria-label="Show Other events"
+              />
+            </div>
+          ) : card.type === 'ha-entities-list' ? (
             <>
               <div className="form-field">
                 <label className="form-label" htmlFor="card-config-title">Title</label>
@@ -47,6 +60,16 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="card-config-subtitle">Subtitle</label>
+                <input
+                  id="card-config-subtitle"
+                  className="form-input"
+                  type="text"
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
                 />
               </div>
               <div className="form-field">
@@ -66,10 +89,20 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
               </div>
             </>
           ) : (
-            <div className="form-field">
-              <label className="form-label" htmlFor="card-config-entity">Entity</label>
-              <EntityPicker id="card-config-entity" value={entityId} onChange={setEntityId} />
-            </div>
+            <>
+              <div className="form-field">
+                <label className="form-label" htmlFor="card-config-entity">Entity</label>
+                <EntityPicker id="card-config-entity" value={entityId} onChange={setEntityId} />
+              </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="card-config-title">Title</label>
+                <input id="card-config-title" className="form-input" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="card-config-subtitle">Subtitle</label>
+                <input id="card-config-subtitle" className="form-input" type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+              </div>
+            </>
           )}
         </div>
         <div className="modal-footer">

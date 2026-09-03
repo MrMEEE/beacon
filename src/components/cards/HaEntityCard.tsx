@@ -18,6 +18,8 @@ function friendlyName(entity: EntityState | null, fallback: string): string {
 /** Generic single-entity state card, like Lovelace's "entity" card. */
 export function HaEntityCard({ config }: DashboardCardProps) {
   const entityId = typeof config.entity_id === 'string' ? config.entity_id : '';
+  const title = typeof config.title === 'string' ? config.title.trim() : '';
+  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
   const [entity, setEntity] = useState<EntityState | null>(null);
 
   useEffect(() => {
@@ -39,6 +41,8 @@ export function HaEntityCard({ config }: DashboardCardProps) {
   if (!entityId) {
     return (
       <section className="dash-sidebar-section dash-ha-card">
+        {title && <h3 className="dash-sidebar-heading">{title}</h3>}
+        {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
         <div className="dash-ha-card-empty">No entity selected — configure this card</div>
       </section>
     );
@@ -48,7 +52,8 @@ export function HaEntityCard({ config }: DashboardCardProps) {
 
   return (
     <section className="dash-sidebar-section dash-ha-card">
-      <h3 className="dash-sidebar-heading">{friendlyName(entity, entityId)}</h3>
+      <h3 className="dash-sidebar-heading">{title || friendlyName(entity, entityId)}</h3>
+      {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
       <div className="dash-ha-card-state">
         {entity ? entity.state : '—'}
         {typeof unit === 'string' && entity ? <span className="dash-ha-card-unit">{unit}</span> : null}

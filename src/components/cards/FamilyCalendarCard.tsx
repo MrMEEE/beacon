@@ -2,8 +2,9 @@ import { DashboardCardProps } from '../../types/dashboard-cards';
 import { EventCard } from '../EventCard';
 
 /** Per-member calendar grid (default layout's main content). */
-export function FamilyCalendarCard({ context }: DashboardCardProps) {
+export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
   const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
+  const showOther = config.show_other !== false;
 
   const hasMemberCalendars = members.some(
     (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,
@@ -64,7 +65,7 @@ export function FamilyCalendarCard({ context }: DashboardCardProps) {
           </section>
         );
       })}
-      {other.length > 0 && (
+      {showOther && other.length > 0 && (
         <section className="dash-member-col dash-member-col--other">
           <div className="dash-member-header">
             <span className="dash-member-avatar" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border)' }}>

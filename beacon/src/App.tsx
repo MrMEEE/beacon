@@ -565,6 +565,7 @@ export function App() {
               members={members}
               layout={settings.dashboardLayout}
               advancedDashboard={settings.advancedDashboard}
+              timeFormat={settings.timeFormat}
               selectedDate={dashboardDate}
               onSelectedDateChange={setDashboardDate}
             />

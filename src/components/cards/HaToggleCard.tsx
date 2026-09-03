@@ -13,6 +13,8 @@ interface EntityState {
 /** Toggle card for a light/switch entity, like Lovelace's toggle row. */
 export function HaToggleCard({ config }: DashboardCardProps) {
   const entityId = typeof config.entity_id === 'string' ? config.entity_id : '';
+  const title = typeof config.title === 'string' ? config.title.trim() : '';
+  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
   const [entity, setEntity] = useState<EntityState | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -35,6 +37,8 @@ export function HaToggleCard({ config }: DashboardCardProps) {
   if (!entityId) {
     return (
       <section className="dash-sidebar-section dash-ha-card">
+        {title && <h3 className="dash-sidebar-heading">{title}</h3>}
+        {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
         <div className="dash-ha-card-empty">No entity selected — configure this card</div>
       </section>
     );
@@ -57,6 +61,7 @@ export function HaToggleCard({ config }: DashboardCardProps) {
 
   return (
     <section className="dash-sidebar-section dash-ha-card">
+      {subtitle && <div className="dash-ha-card-subtitle">{subtitle}</div>}
       <button
         type="button"
         className={`dash-ha-toggle ${isOn ? 'dash-ha-toggle--on' : ''}`}
@@ -64,7 +69,7 @@ export function HaToggleCard({ config }: DashboardCardProps) {
         disabled={pending || !entity}
         aria-pressed={isOn}
       >
-        <span className="dash-ha-toggle-name">{name}</span>
+        <span className="dash-ha-toggle-name">{title || name}</span>
         <span className="dash-ha-toggle-switch" />
       </button>
     </section>
