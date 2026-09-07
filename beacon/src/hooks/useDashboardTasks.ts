@@ -1,21 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { hasToken, haFetch, callHaService } from '../api/ha-rest';
 import { useLocalTasks } from './useLocalTasks';
+import { useTaskmate } from './useTaskmate';
 
 export interface DashboardTodoItem {
   uid: string;
   summary: string;
   status: 'needs_action' | 'completed';
   listId: string;
+  userId?: string;
 }
 
-/**
- * Fetches todo items for the dashboard Tasks section.
- * Combines local To-Do items with items from the first HA task-type list.
- */
 export function useDashboardTasks(connected: boolean) {
   const localTasks = useLocalTasks();
-  const [haItems, setHaItems] = useState<DashboardTodoItem[]>([]);
+  const { users, listByUser, completions } = useTaskmate(connected);
+  const [haItems, setHaItems] = useState<Omit<DashboardTodoItem, 'userId'>[]>([]);
 
   // Fetch HA todo items for task-type lists
   useEffect(() => {
@@ -23,7 +22,7 @@ export function useDashboardTasks(connected: boolean) {
 
     async function fetchTasks() {
       try {
-        // Get the first non-grocery HA todo entity
+        // Get the non-grocery HA todo entities
         const states = await haFetch('/api/states') as Array<{ entity_id: string; state: string; attributes: Record<string, unknown> }>;
 
         const todoEntities = states.filter(s =>
@@ -33,7 +32,7 @@ export function useDashboardTasks(connected: boolean) {
         );
 
         // Fetch items from up to 3 task lists
-        const items: DashboardTodoItem[] = [];
+        const items: Omit<DashboardTodoItem, 'userId'>[] = [];
         for (const entity of todoEntities.slice(0, 3)) {
           try {
             const result = await callHaService('todo', 'get_items', {
@@ -63,19 +62,43 @@ export function useDashboardTasks(connected: boolean) {
     return () => clearInterval(interval);
   }, [connected]);
 
-  // Combine local To-Do items + HA task items
-  const localItems: DashboardTodoItem[] = localTasks
-    .getTasksForList('beacon-todo')
-    .map(t => ({
-      uid: t.id,
-      summary: t.summary,
-      status: t.status,
-      listId: 'beacon-todo',
+  const items: DashboardTodoItem[] = useMemo(() => {
+    const local: DashboardTodoItem[] = localTasks
+      .getTasksForList('beacon-todo')
+      .filter(t => t.status === 'needs_action' || (t.completedAt ? isToday(t.completedAt) : false))
+      .map(t => ({
+        uid: t.id,
+        summary: t.summary,
+        status: t.status,
+        listId: 'beacon-todo',
+      }));
+
+    const fromHa: DashboardTodoItem[] = [];
+    for (const i of haItems) {
+      const userId = listByUser[i.listId]?.childId;
+      if (i.status === 'needs_action' || userId != null) {
+        fromHa.push({ ...i, userId });
+      }
+    }
+
+    const done: DashboardTodoItem[] = completions.map(c => ({
+      uid: c.uid,
+      summary: c.summary,
+      status: 'completed' as const,
+      listId: '',
+      userId: c.userId,
     }));
 
-  const allItems = [...localItems, ...haItems];
+    const seen = new Set<string>();
+    return [...local, ...fromHa, ...done].filter(it => {
+      const key = `${it.userId ?? ''}:${it.uid}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [localTasks, haItems, listByUser, completions]);
 
-  const toggleItem = useCallback(async (uid: string, currentStatus: string) => {
+  const toggleItem = useCallback(async (uid: string, currentStatus: string, listId?: string) => {
     // Check if it's a local item
     const localItem = localTasks.getTasksForList('beacon-todo').find(t => t.id === uid);
     if (localItem) {
@@ -83,8 +106,8 @@ export function useDashboardTasks(connected: boolean) {
       return;
     }
 
-    // HA item — find the list and toggle
-    const haItem = haItems.find(i => i.uid === uid);
+    const haItem = haItems.find(i => i.uid === uid && (listId == null || i.listId === listId))
+      ?? haItems.find(i => i.uid === uid);
     if (!haItem) return;
     const newStatus = currentStatus === 'needs_action' ? 'completed' : 'needs_action';
     try {
@@ -94,14 +117,16 @@ export function useDashboardTasks(connected: boolean) {
         status: newStatus,
       });
       setHaItems(prev => prev.map(i =>
-        i.uid === uid ? { ...i, status: newStatus as 'needs_action' | 'completed' } : i
+        i.uid === uid && i.listId === haItem.listId
+          ? { ...i, status: newStatus as 'needs_action' | 'completed' }
+          : i
       ));
     } catch (err) {
       console.warn('Failed to toggle todo item:', err);
     }
   }, [localTasks, haItems]);
 
-  return { items: allItems, toggleItem };
+  return { items, toggleItem, users };
 }
 
 const GROCERY_KEYWORDS = [
@@ -112,4 +137,14 @@ const GROCERY_KEYWORDS = [
 function isGroceryEntity(name: string): boolean {
   const lower = name.toLowerCase();
   return GROCERY_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function isToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
 }
