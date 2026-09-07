@@ -14,13 +14,29 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: mrmeee/beacon-modular-dashboard
-  IMAGE_TAG: "0.1.3"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # The manifest lives on this branch; the app source lives on modular-dashboard.
+      - name: Checkout add-on manifest
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: beacon-modular-dashboard
+          sparse-checkout-cone-mode: false
+
+      - name: Read preview version
+        id: preview
+        run: |
+          version=$(sed -n 's/^version: *"\(.*\)"/\1/p' beacon-modular-dashboard/config.yaml)
+          if [ -z "$version" ]; then
+            echo "No version found in beacon-modular-dashboard/config.yaml" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Checkout modular dashboard source
         uses: actions/checkout@v4
         with:
@@ -46,7 +62,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.preview.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:modular-dashboard
           cache-from: type=gha
           cache-to: type=gha,mode=max
