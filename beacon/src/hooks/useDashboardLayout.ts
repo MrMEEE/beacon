@@ -7,7 +7,7 @@ const DEFAULT_VIEW_ID = 'default-view';
 
 type DashboardPreset = 'default' | 'classic' | 'compact';
 
-interface StoredDashboardLayoutV3 {
+export interface StoredDashboardLayoutV3 {
   version: 3;
   customized: boolean;
   activeViewId: string;
@@ -15,7 +15,7 @@ interface StoredDashboardLayoutV3 {
 }
 
 /** Previous multi-view layout shape, using 12 columns in every region. */
-interface StoredDashboardLayoutV2 {
+export interface StoredDashboardLayoutV2 {
   version: 2;
   customized: boolean;
   activeViewId: string;
@@ -23,7 +23,7 @@ interface StoredDashboardLayoutV2 {
 }
 
 /** Pre-Phase-4 shape, kept only for the one-time migration below. */
-interface StoredDashboardLayoutV1 {
+export interface StoredDashboardLayoutV1 {
   customized: boolean;
   regions: DashboardRegionLayout;
 }
@@ -62,7 +62,7 @@ function initialFor(preset: DashboardPreset): StoredDashboardLayoutV3 {
 }
 
 /** Doubles x/width in regions whose column count changed from 12 to 24. */
-function widenRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
+export function widenRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
   const widenCards = (cards: DashboardCard[]) => cards.map((dashboardCard) => (
     dashboardCard.layout
       ? {
@@ -83,7 +83,7 @@ function widenRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
 }
 
 /** Migrates persisted dashboard layouts to the current multi-view grid shape. */
-function migrate(stored: StoredDashboardLayoutV1 | StoredDashboardLayoutV2 | StoredDashboardLayoutV3, preset: DashboardPreset): StoredDashboardLayoutV3 {
+export function migrate(stored: StoredDashboardLayoutV1 | StoredDashboardLayoutV2 | StoredDashboardLayoutV3, preset: DashboardPreset): StoredDashboardLayoutV3 {
   if ('version' in stored && stored.version === 3) {
     return { ...stored, views: stored.views.map((view) => ({ ...view, regions: dedupeRegions(view.regions) })) };
   }
@@ -118,7 +118,7 @@ function dedupeCards(cards: DashboardCard[]): DashboardCard[] {
   return Array.from(byId.values());
 }
 
-function dedupeRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
+export function dedupeRegions(regions: DashboardRegionLayout): DashboardRegionLayout {
   return {
     topbar: dedupeCards(regions.topbar),
     main: dedupeCards(regions.main),
