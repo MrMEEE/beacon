@@ -870,6 +870,27 @@
   gap: 6px;
 }
 
+.dash-entity-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-entity-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.dash-entity-filters .form-input {
+  flex: 2 1 0;
+  min-width: 0;
+}
+
+.dash-entity-filters .form-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .dash-card-picker-entity-option {
   display: flex;
   align-items: center;

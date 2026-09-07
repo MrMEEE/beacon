@@ -1,77 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DashboardCardProps } from '../../types/dashboard-cards';
-import { getEntityState, callHaService } from '../../api/ha-rest';
+import { callHaService } from '../../api/ha-rest';
+import { refreshEntities } from '../../api/ha-entity-store';
+import { useHaEntities } from '../../hooks/useHaEntities';
+import { readEntityIds, readString } from './card-config';
 
-const POLL_INTERVAL = 5_000;
-
-interface EntityState {
-  entity_id: string;
-  state: string;
-  attributes: Record<string, unknown>;
-}
-
-/** Toggle card for a light/switch entity, like Lovelace's toggle row. */
+/** Toggle card for light/switch entities, like Lovelace's toggle rows. */
 export function HaToggleCard({ config }: DashboardCardProps) {
-  const configuredEntityIds = Array.isArray(config.entity_ids)
-    ? config.entity_ids.filter((entityId): entityId is string => typeof entityId === 'string')
-    : [];
-  // Existing cards stored one entity under entity_id before multi-toggle support.
-  const legacyEntityId = typeof config.entity_id === 'string' ? config.entity_id : '';
-  const entityIds = configuredEntityIds.length > 0 ? configuredEntityIds : legacyEntityId ? [legacyEntityId] : [];
-  const title = typeof config.title === 'string' ? config.title.trim() : '';
-  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
-  const [entities, setEntities] = useState<Record<string, EntityState>>({});
-  const [pendingEntityIds, setPendingEntityIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (entityIds.length === 0) return;
-    let cancelled = false;
-    const load = async () => {
-      const states = await Promise.all(entityIds.map((entityId) => getEntityState(entityId)));
-      if (!cancelled) {
-        setEntities((previous) => {
-          const next = { ...previous };
-          states.forEach((state) => {
-            if (state) next[state.entity_id] = state;
-          });
-          return next;
-        });
-      }
-    };
-    const refreshWhenVisible = () => {
-      if (!document.hidden) void load();
-    };
-    void load();
-    const interval = setInterval(refreshWhenVisible, POLL_INTERVAL);
-    document.addEventListener('visibilitychange', refreshWhenVisible);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', refreshWhenVisible);
-    };
-  }, [entityIds.join(',')]);
+  const entityIds = readEntityIds(config, 'entity_ids', 'entity_id');
+  const title = readString(config, 'title');
+  const subtitle = readString(config, 'subtitle');
+  const entities = useHaEntities(entityIds);
+  // Entities mid-toggle, shown optimistically until Home Assistant confirms.
+  const [optimisticStates, setOptimisticStates] = useState<Record<string, string>>({});
+  const [pendingEntityIds, setPendingEntityIds] = useState<string[]>([]);
 
   const handleToggle = async (entityId: string) => {
     const entity = entities[entityId];
     if (!entity) return;
-    const isOn = entity.state === 'on';
-    setPendingEntityIds((previous) => new Set(previous).add(entityId));
-    setEntities((previous) => ({
-      ...previous,
-      [entityId]: { ...entity, state: isOn ? 'off' : 'on' },
-    }));
+
+    setOptimisticStates((previous) => ({ ...previous, [entityId]: entity.state === 'on' ? 'off' : 'on' }));
+    setPendingEntityIds((previous) => [...previous, entityId]);
     try {
       await callHaService(entityId.split('.')[0], 'toggle', { entity_id: entityId });
-      const updatedState = await getEntityState(entityId);
-      if (updatedState) {
-        setEntities((previous) => ({ ...previous, [entityId]: updatedState }));
-      }
+      await refreshEntities([entityId]);
+    } catch {
+      // Roll back rather than leave the switch showing a state HA never reached.
     } finally {
-      setPendingEntityIds((previous) => {
-        const next = new Set(previous);
-        next.delete(entityId);
-        return next;
-      });
+      setOptimisticStates(({ [entityId]: _confirmed, ...rest }) => rest);
+      setPendingEntityIds((previous) => previous.filter((id) => id !== entityId));
     }
   };
 
@@ -92,15 +49,17 @@ export function HaToggleCard({ config }: DashboardCardProps) {
       <div className="dash-ha-toggle-list">
         {entityIds.map((entityId) => {
           const entity = entities[entityId];
-          const isOn = entity?.state === 'on';
-          const name = typeof entity?.attributes.friendly_name === 'string' ? entity.attributes.friendly_name : entityId;
+          const isOn = (optimisticStates[entityId] ?? entity?.state) === 'on';
+          const name = typeof entity?.attributes.friendly_name === 'string'
+            ? entity.attributes.friendly_name
+            : entityId;
           return (
             <button
               key={entityId}
               type="button"
               className={`dash-ha-toggle ${isOn ? 'dash-ha-toggle--on' : ''}`}
               onClick={() => handleToggle(entityId)}
-              disabled={pendingEntityIds.has(entityId) || !entity}
+              disabled={pendingEntityIds.includes(entityId) || !entity}
               aria-pressed={isOn}
             >
               <span className="dash-ha-toggle-name">{name}</span>

@@ -1,10 +1,11 @@
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { EventCard } from '../EventCard';
+import { readBoolean } from './card-config';
 
 /** Per-member calendar grid (default layout's main content). */
 export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
   const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
-  const showOther = config.show_other !== false;
+  const showOther = readBoolean(config, 'show_other', true);
 
   const hasMemberCalendars = members.some(
     (m) => m.calendar_entity || (m.additional_calendar_entities?.length ?? 0) > 0,

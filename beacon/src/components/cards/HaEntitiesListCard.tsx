@@ -1,50 +1,19 @@
-import { useEffect, useState } from 'react';
 import { DashboardCardProps } from '../../types/dashboard-cards';
-import { getEntityState } from '../../api/ha-rest';
+import { HaEntityState } from '../../api/ha-entity-store';
+import { useHaEntities } from '../../hooks/useHaEntities';
+import { readString, readStringArray } from './card-config';
 
-const POLL_INTERVAL = 15_000;
-
-interface EntityState {
-  entity_id: string;
-  state: string;
-  attributes: Record<string, unknown>;
-}
-
-function friendlyName(entity: EntityState, fallback: string): string {
+function friendlyName(entity: HaEntityState, fallback: string): string {
   const name = entity.attributes.friendly_name;
   return typeof name === 'string' ? name : fallback;
 }
 
 /** Generic list-of-entities card, like Lovelace's "entities" card. */
 export function HaEntitiesListCard({ config }: DashboardCardProps) {
-  const entityIds = Array.isArray(config.entity_ids)
-    ? (config.entity_ids as unknown[]).filter((id): id is string => typeof id === 'string')
-    : [];
-  const title = typeof config.title === 'string' && config.title.trim() ? config.title.trim() : 'Entities';
-  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
-  const [entities, setEntities] = useState<Record<string, EntityState>>({});
-
-  useEffect(() => {
-    if (entityIds.length === 0) return;
-    let cancelled = false;
-    const load = () => {
-      Promise.all(entityIds.map((id) => getEntityState(id))).then((states) => {
-        if (cancelled) return;
-        const next: Record<string, EntityState> = {};
-        states.forEach((state, i) => {
-          if (state) next[entityIds[i]] = state;
-        });
-        setEntities(next);
-      });
-    };
-    load();
-    const interval = setInterval(load, POLL_INTERVAL);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityIds.join(',')]);
+  const entityIds = readStringArray(config, 'entity_ids');
+  const title = readString(config, 'title', 'Entities');
+  const subtitle = readString(config, 'subtitle');
+  const entities = useHaEntities(entityIds);
 
   if (entityIds.length === 0) {
     return (

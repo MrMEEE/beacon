@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { DashboardCard } from '../../types/dashboard-cards';
-import { EntityPicker, useEntityOptions } from './EntityPicker';
+import { EntityMultiPicker, EntityPicker } from './EntityPicker';
 import { getCardDefinition } from './registry';
+import { readString, readStringArray } from './card-config';
 
 interface CardConfigModalProps {
   card: DashboardCard;
@@ -14,9 +15,9 @@ function initialConfig(card: DashboardCard) {
   const config = { ...definition?.defaultConfig, ...card.config };
   definition?.configFields?.forEach((field) => {
     if (field.type !== 'entity-list' || !field.legacyKey || Array.isArray(config[field.key])) return;
-    const legacyValue = config[field.legacyKey];
-    if (typeof legacyValue === 'string' && legacyValue) {
-      config[field.key] = [legacyValue];
+    const legacyEntityId = readString(config, field.legacyKey);
+    if (legacyEntityId) {
+      config[field.key] = [legacyEntityId];
       delete config[field.legacyKey];
     }
   });
@@ -28,16 +29,13 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
   const definition = getCardDefinition(card.type);
   const fields = definition?.configFields ?? [];
   const [config, setConfig] = useState<Record<string, unknown>>(() => initialConfig(card));
-  const options = useEntityOptions();
 
   const updateConfig = (key: string, value: unknown) => {
     setConfig((previous) => ({ ...previous, [key]: value }));
   };
 
   const toggleEntity = (key: string, entityId: string) => {
-    const entityIds = Array.isArray(config[key])
-      ? (config[key] as unknown[]).filter((id): id is string => typeof id === 'string')
-      : [];
+    const entityIds = readStringArray(config, key);
     updateConfig(key, entityIds.includes(entityId)
       ? entityIds.filter((id) => id !== entityId)
       : [...entityIds, entityId]);
@@ -70,24 +68,14 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
               );
             }
             if (field.type === 'entity-list') {
-              const entityIds = Array.isArray(config[field.key])
-                ? (config[field.key] as unknown[]).filter((id): id is string => typeof id === 'string')
-                : [];
+              const entityIds = readStringArray(config, field.key);
               return (
                 <div key={field.key} className="form-field">
                   <label className="form-label">{field.label}</label>
-                  <div className="dash-card-picker-entity-list">
-                    {options.map((option) => (
-                      <label key={option.entity_id} className="dash-card-picker-entity-option">
-                        <input
-                          type="checkbox"
-                          checked={entityIds.includes(option.entity_id)}
-                          onChange={() => toggleEntity(field.key, option.entity_id)}
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
+                  <EntityMultiPicker
+                    selectedIds={entityIds}
+                    onToggle={(entityId) => toggleEntity(field.key, entityId)}
+                  />
                 </div>
               );
             }

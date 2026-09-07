@@ -1,42 +1,20 @@
-import { useEffect, useState } from 'react';
 import { DashboardCardProps } from '../../types/dashboard-cards';
-import { getEntityState } from '../../api/ha-rest';
+import { HaEntityState } from '../../api/ha-entity-store';
+import { useHaEntities } from '../../hooks/useHaEntities';
+import { readString } from './card-config';
 
-const POLL_INTERVAL = 15_000;
-
-interface EntityState {
-  entity_id: string;
-  state: string;
-  attributes: Record<string, unknown>;
-}
-
-function friendlyName(entity: EntityState | null, fallback: string): string {
+function friendlyName(entity: HaEntityState | null, fallback: string): string {
   const name = entity?.attributes.friendly_name;
   return typeof name === 'string' ? name : fallback;
 }
 
 /** Generic single-entity state card, like Lovelace's "entity" card. */
 export function HaEntityCard({ config }: DashboardCardProps) {
-  const entityId = typeof config.entity_id === 'string' ? config.entity_id : '';
-  const title = typeof config.title === 'string' ? config.title.trim() : '';
-  const subtitle = typeof config.subtitle === 'string' ? config.subtitle.trim() : '';
-  const [entity, setEntity] = useState<EntityState | null>(null);
-
-  useEffect(() => {
-    if (!entityId) return;
-    let cancelled = false;
-    const load = () => {
-      getEntityState(entityId).then((state) => {
-        if (!cancelled) setEntity(state);
-      });
-    };
-    load();
-    const interval = setInterval(load, POLL_INTERVAL);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [entityId]);
+  const entityId = readString(config, 'entity_id');
+  const title = readString(config, 'title');
+  const subtitle = readString(config, 'subtitle');
+  const entities = useHaEntities(entityId ? [entityId] : []);
+  const entity = entities[entityId] ?? null;
 
   if (!entityId) {
     return (
