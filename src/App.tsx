@@ -138,6 +138,11 @@ export function App() {
   useEffect(() => {
     setHiddenCalendars(new Set(settings.permanentlyHiddenCalendars));
   }, [settings.permanentlyHiddenCalendars]);
+
+  const visibleEvents = useMemo(
+    () => events.filter((event) => !hiddenCalendars.has(event.calendarId)),
+    [events, hiddenCalendars],
+  );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
@@ -553,7 +558,7 @@ export function App() {
         {activeView === 'dashboard' ? (
           <>
             <DashboardView
-              events={events}
+              events={visibleEvents}
               weather={weather}
               chores={settings.choresEnabled ? chores : []}
               completedChoreIds={completedChoreIds}
@@ -563,6 +568,7 @@ export function App() {
               onWeatherClick={() => setActiveView('weather')}
               onEventClick={handleEventClick}
               members={members}
+              taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
               advancedDashboard={settings.advancedDashboard}
               timeFormat={settings.timeFormat}
@@ -676,7 +682,7 @@ export function App() {
                 />
               </div>
               <CalendarSidebar
-                events={events}
+                events={visibleEvents}
                 chores={settings.choresEnabled ? chores : []}
                 completedChoreIds={completedChoreIds}
                 onToggleChore={handleToggleChore}

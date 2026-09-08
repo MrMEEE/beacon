@@ -563,6 +563,7 @@ export function App() {
               onWeatherClick={() => setActiveView('weather')}
               onEventClick={handleEventClick}
               members={members}
+              taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
               advancedDashboard={settings.advancedDashboard}
               timeFormat={settings.timeFormat}

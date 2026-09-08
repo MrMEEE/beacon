@@ -15,6 +15,7 @@ import { AgendaTodayCard } from './cards/AgendaTodayCard';
 import { AgendaWeekCard } from './cards/AgendaWeekCard';
 import { MenuCard } from './cards/MenuCard';
 import { TasksCard } from './cards/TasksCard';
+import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 
 export type { TodoItem } from '../types/dashboard-cards';
@@ -26,10 +27,11 @@ interface DashboardViewProps {
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
   todoItems?: TodoItem[];
-  onToggleTodo?: (uid: string, currentStatus: string) => void;
+  onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   onWeatherClick?: () => void;
   onEventClick?: (event: CalendarEvent) => void;
   members?: FamilyMember[];
+  taskmateUsers?: TaskmateUser[];
   layout?: 'default' | 'classic' | 'compact';
   advancedDashboard?: boolean;
   timeFormat: '12h' | '24h';
@@ -55,6 +57,7 @@ export function DashboardView({
   onWeatherClick,
   onEventClick,
   members = [],
+  taskmateUsers = [],
   layout = 'default',
   advancedDashboard = false,
   timeFormat,
@@ -132,6 +135,7 @@ export function DashboardView({
     todaysMenu,
     todoItems,
     onToggleTodo,
+    taskmateUsers,
     filteredChores,
     completedChoreIds,
     onToggleChore,

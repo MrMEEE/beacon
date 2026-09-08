@@ -2,11 +2,14 @@ import type { ComponentType } from 'react';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from './family';
 import { DayMenu } from './meals';
+import type { TaskmateUser } from './taskmate';
 
 export interface TodoItem {
   uid: string;
   summary: string;
   status: 'needs_action' | 'completed';
+  userId?: string;
+  listId?: string;
 }
 
 export type CardSize = 'sm' | 'md' | 'lg';
@@ -73,7 +76,8 @@ export interface DashboardCardContext {
   weekEvents: { day: Date; events: CalendarEvent[] }[];
   todaysMenu: DayMenu;
   todoItems: TodoItem[];
-  onToggleTodo?: (uid: string, currentStatus: string) => void;
+  onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
+  taskmateUsers: TaskmateUser[];
   filteredChores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
