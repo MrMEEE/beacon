@@ -1,3 +1,19 @@
+# [1.34.0](https://github.com/MrMEEE/beacon/compare/v1.33.1...v1.34.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* create recurring calendar events via HA WebSocket API ([ae02469](https://github.com/MrMEEE/beacon/commit/ae024697d75e41a473f368e6299351baea7e908d))
+* hide permanently disabled calendars from FamilyFilter pills ([5590af9](https://github.com/MrMEEE/beacon/commit/5590af9d8680feaa91b7353eba5781133ae05bc6))
+* honor default grocery list even without English keywords ([842ba5c](https://github.com/MrMEEE/beacon/commit/842ba5c0f5e9c0b13ffd7ef9c32d0e68cece6313))
+* refresh shared settings when the app becomes visible ([fab908e](https://github.com/MrMEEE/beacon/commit/fab908e953399c19283b2e056f3883ff3e03aaee))
+
+
+### Features
+
+* allow unassigned chores kids can claim ([9b301b9](https://github.com/MrMEEE/beacon/commit/9b301b9dcdd3d1c6278f92a387db940de5fa6a3f))
+* configurable grocery list IDs and sidebar shopping card ([#39](https://github.com/MrMEEE/beacon/issues/39)) ([872878c](https://github.com/MrMEEE/beacon/commit/872878c61c4cc36594db080d6cab18a3472ba8c3)), closes [#32](https://github.com/MrMEEE/beacon/issues/32) [#26](https://github.com/MrMEEE/beacon/issues/26)
+
 # [1.36.0](https://github.com/asachs01/beacon/compare/v1.35.0...v1.36.0) (2026-09-19)
 
 
